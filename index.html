@@ -3,110 +3,117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teste de Perfil - 4 Animais</title>
+  <title>Teste de Perfil</title>
   <style>
     body {
       background-color: #000;
-      color: white;
-      font-family: Arial, sans-serif;
+      color: #fff;
+      font-family: sans-serif;
       padding: 20px;
     }
     input, button {
       padding: 10px;
+      font-size: 1em;
       margin-top: 10px;
-      font-size: 16px;
     }
-    #sendButton {
+    button {
       background-color: #007bff;
-      color: white;
+      color: #fff;
       border: none;
       cursor: pointer;
     }
-    #sendButton:hover {
-      background-color: #0056b3;
-    }
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <h1>Teste de Perfil Comportamental 🧠</h1>
-  
-  <div id="nameSection">
-    <label for="nameInput">Digite seu nome para começar:</label><br/>
-    <input type="text" id="nameInput" placeholder="Seu nome" /><br/>
-    <button id="startButton">Começar teste</button>
-  </div>
 
-  <div id="chatSection" class="hidden">
-    <div id="chatBox"></div>
-    <input type="text" id="answerInput" placeholder="Digite sua resposta (a, b, c ou d)" />
-    <button id="sendButton">Enviar</button>
-  </div>
+  <h2>Teste de Perfil Comportamental 🧠</h2>
+
+  <label for="name">Digite seu nome completo para começar:</label><br>
+  <input type="text" id="name" placeholder="Seu nome aqui"/><br>
+  <button onclick="startTest()">Começar</button>
+
+  <div id="chat" class="hidden"></div>
 
   <script>
-    const webhookUrl = "https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app";
-
+    let currentQuestion = 0;
+    let userAnswers = {};
     let userName = "";
-    let chatBox = document.getElementById("chatBox");
 
-    document.getElementById("startButton").onclick = async () => {
-      userName = document.getElementById("nameInput").value.trim();
+    function startTest() {
+      userName = document.getElementById("name").value.trim();
       if (!userName) {
-        alert("Por favor, digite seu nome.");
+        alert("Por favor, insira seu nome.");
         return;
       }
 
-      document.getElementById("nameSection").classList.add("hidden");
-      document.getElementById("chatSection").classList.remove("hidden");
+      document.querySelector("label[for='name']").style.display = "none";
+      document.getElementById("name").style.display = "none";
+      document.querySelector("button[onclick='startTest()']").style.display = "none";
 
-      await sendMessage(""); // inicia a conversa
-    };
-
-    document.getElementById("sendButton").onclick = async () => {
-      const answer = document.getElementById("answerInput").value.trim();
-      if (!answer) return;
-      appendMessage(`Você: ${answer}`);
-      document.getElementById("answerInput").value = "";
-      await sendMessage(answer);
-    };
-
-    document.getElementById("answerInput").addEventListener("keydown", async (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        document.getElementById("sendButton").click();
-      }
-    });
-
-    function appendMessage(text) {
-      const p = document.createElement("p");
-      p.textContent = text;
-      chatBox.appendChild(p);
+      document.getElementById("chat").classList.remove("hidden");
+      askQuestion();
     }
 
-    async function sendMessage(userMessage) {
-      const response = await fetch(webhookUrl, {
+    const questions = [
+      "1. Ao iniciar um novo projeto, o que é mais importante para você?\n\na) Ter uma visão clara do objetivo final e inspirar a equipe.\nb) Garantir que todos estejam se comunicando bem.\nc) Planejar cada etapa cuidadosamente.\nd) Focar nos resultados rapidamente.",
+      "2. Como você prefere trabalhar?\n\na) Com liberdade para ideias.\nb) Em colaboração com outros.\nc) Com plano bem definido.\nd) Em ambiente competitivo.",
+      "3. O que mais te motiva?\n\na) Criar algo inovador.\nb) Construir relacionamentos fortes.\nc) Ter tudo sob controle.\nd) Atingir metas desafiadoras.",
+      "4. Como você lida com mudanças inesperadas?\n\na) Vejo como oportunidade.\nb) Penso nas pessoas.\nc) Ajusto o plano.\nd) Adapto rápido pelo resultado.",
+      "5. Qual ambiente de trabalho você prefere?\n\na) Criativo e autônomo.\nb) Colaborativo e comunicativo.\nc) Organizado e com regras.\nd) Dinâmico e competitivo.",
+      "6. Ao tomar decisões, você geralmente:\n\na) Confia na intuição.\nb) Pensa no impacto nas pessoas.\nc) Analisa dados.\nd) Busca o resultado rápido.",
+      "7. O que você valoriza mais em uma equipe?\n\na) Visão e liberdade.\nb) Comunicação e apoio.\nc) Organização e prazos.\nd) Resultados e eficiência.",
+      "8. Como você reage a feedbacks?\n\na) Inspiração para ideias.\nb) Escuto para melhorar relações.\nc) Analiso objetivamente.\nd) Foco em melhorar resultados.",
+      "9. Qual seu maior foco ao realizar tarefas?\n\na) Impacto futuro.\nb) Conexão com o time.\nc) Execução correta.\nd) Eficiência e meta.",
+      "10. O que mais te incomoda?\n\na) Rotina e falta de criatividade.\nb) Conflitos interpessoais.\nc) Falta de organização.\nd) Perda de tempo e metas."
+    ];
+
+    function askQuestion() {
+      if (currentQuestion < questions.length) {
+        const chat = document.getElementById("chat");
+        const question = questions[currentQuestion];
+        chat.innerHTML = `
+          <p><strong>${question.replace(/\n/g, "<br>")}</strong></p>
+          <input id="answer" placeholder="Digite a, b, c ou d" onkeydown="handleEnter(event)" />
+          <button onclick="submitAnswer()">Enviar</button>
+        `;
+      } else {
+        sendResults();
+      }
+    }
+
+    function handleEnter(e) {
+      if (e.key === "Enter") {
+        submitAnswer();
+      }
+    }
+
+    function submitAnswer() {
+      const answer = document.getElementById("answer").value.trim().toLowerCase();
+      if (!["a", "b", "c", "d"].includes(answer)) {
+        alert("Por favor, responda com a, b, c ou d.");
+        return;
+      }
+      userAnswers[currentQuestion] = answer;
+      currentQuestion++;
+      askQuestion();
+    }
+
+    function sendResults() {
+      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userName: userName,
-          chatInput: userMessage
-        })
+        body: JSON.stringify({ userName, userAnswers })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("chat").innerHTML = `<p>${data.response}</p>`;
+      })
+      .catch(() => {
+        document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Tente novamente.</p>`;
       });
-
-      if (!response.ok) {
-        appendMessage("❌ Erro ao enviar a resposta.");
-        return;
-      }
-
-      const data = await response.json();
-      appendMessage(`🤖 ${data.response}`);
-      if (data.isComplete) {
-        document.getElementById("answerInput").disabled = true;
-        document.getElementById("sendButton").disabled = true;
-      }
     }
   </script>
+
 </body>
 </html>
