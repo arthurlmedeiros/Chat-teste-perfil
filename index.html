@@ -1,118 +1,112 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teste de Perfil Comportamental</title>
+  <title>Teste de Perfil - 4 Animais</title>
   <style>
     body {
       background-color: #000;
-      color: #fff;
+      color: white;
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
+      padding: 20px;
     }
-    .chat-container {
-      background-color: #1a1a1a;
-      border-radius: 8px;
-      padding: 1rem;
-      max-width: 600px;
-      width: 100%;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
     }
-    .messages {
-      min-height: 300px;
-      margin-bottom: 1rem;
-      white-space: pre-wrap;
-    }
-    .user {
-      color: #4fc3f7;
-    }
-    .bot {
-      color: #90caf9;
-    }
-    .input-group {
-      display: flex;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 0.5rem;
-      border: none;
-      border-radius: 4px 0 0 4px;
-    }
-    button {
+    #sendButton {
       background-color: #007bff;
       color: white;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0 4px 4px 0;
       cursor: pointer;
     }
-    button:hover {
+    #sendButton:hover {
       background-color: #0056b3;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="chat-container">
-    <h2>Teste de Perfil Comportamental 🧠</h2>
-    <div class="messages" id="messages"></div>
-    <div class="input-group">
-      <input type="text" id="userInput" placeholder="Digite sua mensagem..." autofocus />
-      <button onclick="enviarMensagem()">Enviar</button>
-    </div>
+  <h1>Teste de Perfil Comportamental 🧠</h1>
+  
+  <div id="nameSection">
+    <label for="nameInput">Digite seu nome para começar:</label><br/>
+    <input type="text" id="nameInput" placeholder="Seu nome" /><br/>
+    <button id="startButton">Começar teste</button>
+  </div>
+
+  <div id="chatSection" class="hidden">
+    <div id="chatBox"></div>
+    <input type="text" id="answerInput" placeholder="Digite sua resposta (a, b, c ou d)" />
+    <button id="sendButton">Enviar</button>
   </div>
 
   <script>
-    const webhookUrl = "https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app"; // ⬅️ Substitua pelo seu endpoint do Webhook
-    let conversationState = {};
+    const webhookUrl = "https://SEU_WEBHOOK_URL_DO_N8N";
 
-    function adicionarMensagemNaTela(texto, classe) {
-      const messages = document.getElementById("messages");
-      const msg = document.createElement("div");
-      msg.className = classe;
-      msg.textContent = texto;
-      messages.appendChild(msg);
-      messages.scrollTop = messages.scrollHeight;
-    }
+    let userName = "";
+    let chatBox = document.getElementById("chatBox");
 
-    function enviarMensagem() {
-      const input = document.getElementById("userInput");
-      const texto = input.value.trim();
-      if (!texto) return;
+    document.getElementById("startButton").onclick = async () => {
+      userName = document.getElementById("nameInput").value.trim();
+      if (!userName) {
+        alert("Por favor, digite seu nome.");
+        return;
+      }
 
-      adicionarMensagemNaTela(texto, "user");
-      input.value = "";
+      document.getElementById("nameSection").classList.add("hidden");
+      document.getElementById("chatSection").classList.remove("hidden");
 
-      fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...conversationState,
-          lastUserMessage: texto
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const resposta = data.response || "Erro ao receber resposta.";
-        adicionarMensagemNaTela(resposta, "bot");
-        conversationState = { ...conversationState, ...data.nextState };
-      })
-      .catch(err => {
-        console.error("Erro:", err);
-        adicionarMensagemNaTela("Erro na comunicação com o servidor.", "bot");
-      });
-    }
+      await sendMessage(""); // inicia a conversa
+    };
 
-    document.getElementById("userInput").addEventListener("keydown", function(e) {
+    document.getElementById("sendButton").onclick = async () => {
+      const answer = document.getElementById("answerInput").value.trim();
+      if (!answer) return;
+      appendMessage(`Você: ${answer}`);
+      document.getElementById("answerInput").value = "";
+      await sendMessage(answer);
+    };
+
+    document.getElementById("answerInput").addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
-        enviarMensagem();
+        e.preventDefault();
+        document.getElementById("sendButton").click();
       }
     });
+
+    function appendMessage(text) {
+      const p = document.createElement("p");
+      p.textContent = text;
+      chatBox.appendChild(p);
+    }
+
+    async function sendMessage(userMessage) {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userName: userName,
+          chatInput: userMessage
+        })
+      });
+
+      if (!response.ok) {
+        appendMessage("❌ Erro ao enviar a resposta.");
+        return;
+      }
+
+      const data = await response.json();
+      appendMessage(`🤖 ${data.response}`);
+      if (data.isComplete) {
+        document.getElementById("answerInput").disabled = true;
+        document.getElementById("sendButton").disabled = true;
+      }
+    }
   </script>
 </body>
 </html>
