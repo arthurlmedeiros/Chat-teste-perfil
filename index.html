@@ -69,8 +69,8 @@
     ];
 
     function askQuestion() {
+      const chat = document.getElementById("chat");
       if (currentQuestion < questions.length) {
-        const chat = document.getElementById("chat");
         const question = questions[currentQuestion];
         chat.innerHTML = `
           <p><strong>${question.replace(/\n/g, "<br>")}</strong></p>
@@ -78,6 +78,7 @@
           <button onclick="submitAnswer()">Enviar</button>
         `;
       } else {
+        chat.innerHTML = `<p>Calculando seu perfil... aguarde um instante.</p>`;
         sendResults();
       }
     }
@@ -89,7 +90,9 @@
     }
 
     function submitAnswer() {
-      const answer = document.getElementById("answer").value.trim().toLowerCase();
+      const answerEl = document.getElementById("answer");
+      if (!answerEl) return;
+      const answer = answerEl.value.trim().toLowerCase();
       if (!["a", "b", "c", "d"].includes(answer)) {
         alert("Por favor, responda com a, b, c ou d.");
         return;
@@ -107,7 +110,8 @@
       })
       .then(res => res.json())
       .then(data => {
-        document.getElementById("chat").innerHTML = `<p>${data.response}</p>`;
+        const chat = document.getElementById("chat");
+        chat.innerHTML = `<p><strong>Resultado:</strong><br>${data.response || "Obrigado por participar!"}</p>`;
       })
       .catch(() => {
         document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Tente novamente.</p>`;
