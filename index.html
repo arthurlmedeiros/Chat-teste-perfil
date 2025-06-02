@@ -9,6 +9,8 @@
       color: #fff;
       font-family: sans-serif;
       padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
     }
     input, button {
       padding: 10px;
@@ -20,80 +22,186 @@
       color: #fff;
       border: none;
       cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
     }
     .hidden { display: none; }
+    label {
+      display: block;
+      margin: 8px 0;
+      cursor: pointer;
+    }
+    input[type="radio"] {
+      margin-right: 8px;
+    }
+    .container {
+      margin-top: 20px;
+    }
+    .progress-bar {
+      height: 10px;
+      background-color: #333;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .progress {
+      height: 100%;
+      background-color: #007bff;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
 <body>
   <h2>Teste de Perfil Comportamental 🧠</h2>
+  
+  <div id="intro-container">
+    <label for="name">Digite seu nome completo para começar:</label><br>
+    <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name" /><br>
+    <button id="start-button">Começar</button>
+  </div>
 
-  <label for="name">Digite seu nome completo para começar:</label><br>
-  <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name" /><br>
-  <button onclick="startTest()">Começar</button>
+  <div id="quiz" class="hidden">
+    <div class="progress-bar">
+      <div id="progress" class="progress"></div>
+    </div>
+    <div id="question-container"></div>
+  </div>
 
-  <div id="quiz" class="hidden"></div>
-
+  <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
+  
   <script>
-    const perguntasBase = [...]; // permanece igual
+    // Array de perguntas base - exemplo de estrutura correta
+    const perguntasBase = [
+      {
+        texto: "Como você prefere trabalhar em equipe?",
+        opcoes: [
+          { texto: "Liderando e tomando decisões", perfil: "dominante" },
+          { texto: "Analisando dados e informações", perfil: "analitico" },
+          { texto: "Mantendo harmonia e cooperação", perfil: "estavel" },
+          { texto: "Motivando e inspirando os outros", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você lida com desafios?",
+        opcoes: [
+          { texto: "Enfrento-os diretamente", perfil: "dominante" },
+          { texto: "Analiso todas as possibilidades", perfil: "analitico" },
+          { texto: "Busco consenso e apoio", perfil: "estavel" },
+          { texto: "Transformo-os em oportunidades", perfil: "influente" }
+        ]
+      }
+      // Adicione mais perguntas conforme necessário
+    ];
     
     let perguntas = [];
     let respostas = {};
     let userName = "";
     let perguntasEnviadas = [];
+    let perguntaAtual = 0;
 
+    // Função para embaralhar arrays
     function embaralhar(array) {
-      return array.map(e => ({ e, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ e }) => e);
+      const novoArray = [...array];
+      for (let i = novoArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [novoArray[i], novoArray[j]] = [novoArray[j], novoArray[i]];
+      }
+      return novoArray;
     }
 
+    // Função para iniciar o teste
     function startTest() {
       userName = document.getElementById("name").value.trim();
-      if (!userName) return alert("Por favor, insira seu nome.");
+      if (!userName) {
+        alert("Por favor, insira seu nome.");
+        return;
+      }
 
+      // Preparar perguntas embaralhadas
       perguntas = embaralhar(perguntasBase).map((p, idx) => {
         const opcoes = embaralhar(p.opcoes);
         const perfilPorLetra = {};
         const letras = ["a", "b", "c", "d"];
-        opcoes.forEach((op, i) => op.letra = letras[i]);
-        opcoes.forEach(op => perfilPorLetra[op.letra] = op.perfil);
+        
+        opcoes.forEach((op, i) => {
+          op.letra = letras[i];
+          perfilPorLetra[letras[i]] = op.perfil;
+        });
 
         perguntasEnviadas.push({ id: idx, perfilPorLetra });
         return { id: idx, texto: p.texto, opcoes };
       });
 
-      document.querySelector("label").classList.add("hidden");
-      document.getElementById("name").classList.add("hidden");
-      document.querySelector("button[onclick='startTest()']").classList.add("hidden");
-
+      // Esconder elementos de introdução
+      document.getElementById("intro-container").classList.add("hidden");
+      
+      // Mostrar quiz
       document.getElementById("quiz").classList.remove("hidden");
-      mostrarPergunta(0);
+      perguntaAtual = 0;
+      atualizarProgressBar();
+      mostrarPergunta(perguntaAtual);
     }
 
+    // Função para atualizar a barra de progresso
+    function atualizarProgressBar() {
+      const progresso = (perguntaAtual / perguntas.length) * 100;
+      document.getElementById("progress").style.width = `${progresso}%`;
+    }
+
+    // Função para mostrar uma pergunta
     function mostrarPergunta(i) {
-      if (i >= perguntas.length) return enviarResultados();
+      if (i >= perguntas.length) {
+        enviarResultados();
+        return;
+      }
 
       const p = perguntas[i];
-      let html = `<p><strong>${i + 1}. ${p.texto}</strong></p>`;
+      let html = `<p><strong>${i + 1}/${perguntas.length}. ${p.texto}</strong></p>`;
+      
       p.opcoes.forEach(op => {
-        html += `<label><input type="radio" name="resposta" value="${op.letra}" /> ${op.letra}) ${op.texto}</label><br>`;
+        html += `<label><input type="radio" name="resposta" value="${op.letra}" /> ${op.letra}) ${op.texto}</label>`;
       });
-      html += `<button onclick="registrarResposta(${i})">Próxima</button>`;
-      document.getElementById("quiz").innerHTML = html;
+      
+      html += `<div class="container"><button id="next-button">Próxima</button></div>`;
+      
+      document.getElementById("question-container").innerHTML = html;
+      
+      // Adicionar evento ao botão
+      document.getElementById("next-button").addEventListener("click", function() {
+        registrarResposta(i);
+      });
     }
 
+    // Função para registrar resposta
     function registrarResposta(i) {
       const selecionada = document.querySelector("input[name='resposta']:checked");
-      if (!selecionada) return alert("Por favor, selecione uma resposta.");
+      if (!selecionada) {
+        alert("Por favor, selecione uma resposta.");
+        return;
+      }
 
       respostas[i] = selecionada.value;
-      mostrarPergunta(i + 1);
+      perguntaAtual++;
+      atualizarProgressBar();
+      mostrarPergunta(perguntaAtual);
     }
 
+    // Função para enviar resultados
     function enviarResultados() {
-      document.getElementById("quiz").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      
       fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userName, userAnswers: respostas, perguntasEnviadas })
+        body: JSON.stringify({ 
+          userName, 
+          userAnswers: respostas, 
+          perguntasEnviadas 
+        })
       })
       .then(res => res.json())
       .then(data => {
@@ -108,37 +216,70 @@
 
         const explicacao = respostaTexto.replace(/\n/g, "<br>");
 
-        const quizDiv = document.getElementById("quiz");
-        quizDiv.innerHTML = `${frase}<p style='margin-top:1em;'>${explicacao}</p>`;
+        document.getElementById("question-container").innerHTML = `
+          ${frase}
+          <p style='margin-top:1em;'>${explicacao}</p>
+          <div class="container">
+            <button id="restart-button">Refazer Teste</button>
+          </div>
+        `;
 
+        // Mostrar gráfico
         const canvas = document.getElementById("graficoPerfil");
         canvas.classList.remove("hidden");
-        const ctx = canvas.getContext("2d");
-        new Chart(ctx, {
-          type: "pie",
-          data: {
-            labels: labels,
-            datasets: [{
-              data: values,
-              backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: "bottom" },
-              title: { display: true, text: "Distribuição de Perfil Comportamental" }
+        
+        // Verificar se Chart.js está carregado
+        if (typeof Chart !== 'undefined') {
+          const ctx = canvas.getContext("2d");
+          new Chart(ctx, {
+            type: "pie",
+            data: {
+              labels: labels,
+              datasets: [{
+                data: values,
+                backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: "bottom" },
+                title: { display: true, text: "Distribuição de Perfil Comportamental" }
+              }
             }
-          }
+          });
+        } else {
+          console.error("Chart.js não está carregado");
+        }
+        
+        // Adicionar evento ao botão de reiniciar
+        document.getElementById("restart-button").addEventListener("click", function() {
+          location.reload();
         });
       })
       .catch(err => {
-        document.getElementById("quiz").innerHTML = "<p>Erro ao enviar os dados.</p>";
-        console.error(err);
+        document.getElementById("question-container").innerHTML = `
+          <p>Erro ao enviar os dados. Por favor, tente novamente.</p>
+          <div class="container">
+            <button id="retry-button">Tentar Novamente</button>
+          </div>
+        `;
+        
+        document.getElementById("retry-button").addEventListener("click", function() {
+          enviarResultados();
+        });
+        
+        console.error("Erro:", err);
       });
     }
+
+    // Adicionar evento ao botão de início quando o DOM estiver carregado
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById("start-button").addEventListener("click", startTest);
+    });
   </script>
-  <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Carregar Chart.js de forma mais confiável -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </body>
 </html>
