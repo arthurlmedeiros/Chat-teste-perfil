@@ -109,33 +109,61 @@
     }
 
     function sendResults() {
-      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userName, userAnswers })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const resposta = data.response || data.output || Object.keys(data)[0] || "Obrigado por participar!";
-        const chat = document.getElementById("chat");
-        
-        // Mostra apenas a introdução do texto
-        const saudacao = resposta.split("\n")[0] || "Resultado:";
-        chat.innerHTML = `<p><strong>Resultado:</strong><br>${saudacao}</p>`;
+  fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userName, userAnswers })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Resposta recebida:", data);
+    const resposta = data.response || data.output || Object.keys(data)[0] || "Obrigado por participar!";
+    
+    const chat = document.getElementById("chat");
+    chat.innerHTML = `
+      <p><strong>Resultado:</strong></p>
+      <pre style="white-space: pre-wrap; font-size: 0.95em; color: #ccc;">${resposta}</pre>
+      <canvas id="graficoPerfil" width="300" height="300"></canvas>
+    `;
 
-        // Tenta extrair os percentuais com regex
-        const matches = resposta.match(/- (Águia|Gato|Lobo|Tubarão) \(.\): (\d+)%/g);
-        if (!matches) return;
+    // Extrai percentuais com regex
+    const matches = resposta.match(/- (Águia|Gato|Lobo|Tubarão) \(.\): (\d+)%/g);
+    if (!matches) return;
 
-        const labels = [], dataValues = [];
+    const labels = [], dataValues = [];
+    matches.forEach(item => {
+      const [, label, valor] = item.match(/- (Águia|Gato|Lobo|Tubarão).*: (\d+)%/) || [];
+      if (label && valor) {
+        labels.push(label);
+        dataValues.push(parseInt(valor));
+      }
+    });
 
-        matches.forEach(item => {
-          const [, label, valor] = item.match(/- (Águia|Gato|Lobo|Tubarão).*: (\d+)%/) || [];
-          if (label && valor) {
-            labels.push(label);
-            dataValues.push(parseInt(valor));
-          }
-        });
+    const canvas = document.getElementById("graficoPerfil");
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: dataValues,
+          backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: { display: true, text: 'Distribuição de Perfil Comportamental' }
+        }
+      }
+    });
+  })
+  .catch((err) => {
+    console.error("Erro ao enviar os dados:", err);
+    document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Veja o console para mais detalhes.</p>`;
+  });
+}
 
         const canvas = document.getElementById("graficoPerfil");
         canvas.classList.remove("hidden");
