@@ -104,20 +104,20 @@
 
     function sendResults() {
       fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userName, userAnswers })
-    })
-    .then(res => res.json())
-    .then(data => {
-      const chat = document.getElementById("chat");
-      chat.innerHTML = `<p><strong>Resultado:</strong><br>${data.output || data.response || "Obrigado por participar!"}</p>`;
-  })
-    .catch(() => {
-      document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Tente novamente.</p>`;
-  });
-}
-
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userName, userAnswers })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const chat = document.getElementById("chat");
+        const resposta = Array.isArray(data) ? data[0].response || data[0].output : data.response || data.output;
+        chat.innerHTML = `<p><strong>Resultado:</strong><br>${resposta || "Obrigado por participar!"}</p>`;
+      })
+      .catch(() => {
+        document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Tente novamente.</p>`;
+      });
+    }
   </script>
 
 </body>
