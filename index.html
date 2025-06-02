@@ -126,10 +126,11 @@
             resposta = data.output;
           } else {
             const unicaChave = Object.keys(data)[0];
-            if (unicaChave && data[unicaChave]?.response) {
-              resposta = data[unicaChave].response;
+            const valorInterno = data[unicaChave];
+            if (valorInterno && typeof valorInterno === "object" && "response" in valorInterno) {
+              resposta = valorInterno.response;
             } else {
-              resposta = unicaChave || "Obrigado por participar!";
+              resposta = valorInterno || unicaChave || "Obrigado por participar!";
             }
           }
         }
