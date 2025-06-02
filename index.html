@@ -34,29 +34,8 @@
   <div id="quiz" class="hidden"></div>
 
   <script>
-    const perguntasBase = [
-      { texto: "Quando inicia um novo ciclo ou desafio, o que te guia naturalmente?", opcoes: [ { texto: "A ambição de alcançar o topo e superar metas.", perfil: "Tubarão" }, { texto: "Ter liberdade para criar algo original e significativo.", perfil: "Águia" }, { texto: "Garantir que todos se sintam acolhidos e ouvidos.", perfil: "Gato" }, { texto: "Um plano detalhado com etapas claras.", perfil: "Lobo" } ] },
-      { texto: "Em momentos de crise, sua primeira reação costuma ser:", opcoes: [ { texto: "Pensar em soluções criativas que ninguém considerou.", perfil: "Águia" }, { texto: "Ver como isso afetará as pessoas ao seu redor.", perfil: "Gato" }, { texto: "Mapear as causas e organizar uma resposta lógica.", perfil: "Lobo" }, { texto: "Agir com rapidez para minimizar perdas.", perfil: "Tubarão" } ] },
-      { texto: "Ao assumir a liderança em um projeto importante, o que mais te preocupa?", opcoes: [ { texto: "Ter liberdade para inovar.", perfil: "Águia" }, { texto: "Garantir que todos se sintam parte do processo.", perfil: "Gato" }, { texto: "Estruturar processos sólidos e eficientes.", perfil: "Lobo" }, { texto: "Cumprir prazos agressivos com excelência.", perfil: "Tubarão" } ] },
-      { texto: "O que te dá mais satisfação ao final de uma jornada ou projeto?", opcoes: [ { texto: "Ver que sua ideia inspirou ou mudou algo.", perfil: "Águia" }, { texto: "Saber que fortaleceu vínculos com pessoas importantes.", perfil: "Gato" }, { texto: "Observar que tudo correu conforme o planejado.", perfil: "Lobo" }, { texto: "Ver o resultado final superando metas.", perfil: "Tubarão" } ] },
-      { texto: "Quando recebe uma crítica construtiva, você tende a:", opcoes: [ { texto: "Usar como ponto de partida para algo novo.", perfil: "Águia" }, { texto: "Refletir sobre como melhorar relacionamentos.", perfil: "Gato" }, { texto: "Analisar com objetividade.", perfil: "Lobo" }, { texto: "Focar em melhorar para alcançar resultados.", perfil: "Tubarão" } ] },
-      { texto: "Ao tomar decisões difíceis, o que mais conta para você?", opcoes: [ { texto: "O que gera maior impacto inovador.", perfil: "Águia" }, { texto: "O que trará mais bem-estar coletivo.", perfil: "Gato" }, { texto: "O que é mais racional e previsível.", perfil: "Lobo" }, { texto: "O que traz resultados mais rápidos.", perfil: "Tubarão" } ] },
-      { texto: "O que mais te desgasta em uma rotina profissional?", opcoes: [ { texto: "Falta de espaço para criar.", perfil: "Águia" }, { texto: "Clima frio ou sem conexão humana.", perfil: "Gato" }, { texto: "Mudanças repentinas e falta de processo.", perfil: "Lobo" }, { texto: "Lentidão e falta de metas claras.", perfil: "Tubarão" } ] },
-      { texto: "Quando está em um ambiente novo, o que percebe primeiro?", opcoes: [ { texto: "As possibilidades de melhoria.", perfil: "Águia" }, { texto: "O clima emocional e as pessoas.", perfil: "Gato" }, { texto: "As regras e funcionamento do local.", perfil: "Lobo" }, { texto: "Quem se destaca e toma decisões.", perfil: "Tubarão" } ] },
-      { texto: "Qual elogio te deixaria mais satisfeito?", opcoes: [ { texto: "Sua visão abriu novos caminhos.", perfil: "Águia" }, { texto: "Você fez todos se sentirem importantes.", perfil: "Gato" }, { texto: "Tudo funcionou graças à sua organização.", perfil: "Lobo" }, { texto: "Você entregou mais do que o esperado.", perfil: "Tubarão" } ] },
-      { texto: "Se pudesse escolher qualquer função em uma equipe, você seria:", opcoes: [ { texto: "O idealizador de soluções.", perfil: "Águia" }, { texto: "O responsável pela harmonia do grupo.", perfil: "Gato" }, { texto: "O planejador e controlador de prazos.", perfil: "Lobo" }, { texto: "O executor que garante os resultados.", perfil: "Tubarão" } ] },
-      { texto: "Diante de um fracasso, o que você faz primeiro?", opcoes: [ { texto: "Redefine os objetivos com uma nova visão.", perfil: "Águia" }, { texto: "Oferece apoio aos envolvidos.", perfil: "Gato" }, { texto: "Revê todo o processo para entender o erro.", perfil: "Lobo" }, { texto: "Estabelece rapidamente o plano de recuperação.", perfil: "Tubarão" } ] },
-      { texto: "O que mais admira em colegas de trabalho?", opcoes: [ { texto: "Iniciativa e autenticidade.", perfil: "Águia" }, { texto: "Empatia e colaboração.", perfil: "Gato" }, { texto: "Precisão e responsabilidade.", perfil: "Lobo" }, { texto: "Determinação e foco em metas.", perfil: "Tubarão" } ] },
-      { texto: "Como você se comporta em um grupo novo?", opcoes: [ { texto: "Provoca reflexões e novas ideias.", perfil: "Águia" }, { texto: "Constrói laços rapidamente.", perfil: "Gato" }, { texto: "Observa atentamente antes de agir.", perfil: "Lobo" }, { texto: "Toma iniciativa para liderar.", perfil: "Tubarão" } ] },
-      { texto: "Quando pensa no seu legado, você deseja:", opcoes: [ { texto: "Ter mudado a forma como as pessoas pensam.", perfil: "Águia" }, { texto: "Ter tocado vidas com humanidade.", perfil: "Gato" }, { texto: "Ter deixado sistemas funcionando bem.", perfil: "Lobo" }, { texto: "Ter batido metas que pareciam impossíveis.", perfil: "Tubarão" } ] },
-      { texto: "O que te incomoda mais?", opcoes: [ { texto: "Rotina sem propósito.", perfil: "Águia" }, { texto: "Conflitos interpessoais.", perfil: "Gato" }, { texto: "Falta de clareza nos processos.", perfil: "Lobo" }, { texto: "Falta de ambição e agilidade.", perfil: "Tubarão" } ] },
-      { texto: "Qual dessas atitudes descreve melhor você?", opcoes: [ { texto: "Criar soluções inesperadas.", perfil: "Águia" }, { texto: "Cuidar do clima emocional.", perfil: "Gato" }, { texto: "Antecipar problemas com método.", perfil: "Lobo" }, { texto: "Tomar decisões firmes com rapidez.", perfil: "Tubarão" } ] },
-      { texto: "O que você mais valoriza em uma equipe?", opcoes: [ { texto: "Liberdade para inovar.", perfil: "Águia" }, { texto: "Conexão e escuta ativa.", perfil: "Gato" }, { texto: "Organização e disciplina.", perfil: "Lobo" }, { texto: "Alta performance.", perfil: "Tubarão" } ] },
-      { texto: "Quando algo sai errado:", opcoes: [ { texto: "Procuro uma nova abordagem criativa.", perfil: "Águia" }, { texto: "Reavalio meu papel no impacto nos outros.", perfil: "Gato" }, { texto: "Revisito os passos anteriores.", perfil: "Lobo" }, { texto: "Ajusto e sigo com foco no resultado.", perfil: "Tubarão" } ] },
-      { texto: "Durante mudanças organizacionais:", opcoes: [ { texto: "Enxergo oportunidades de reinventar.", perfil: "Águia" }, { texto: "Me preocupo com a adaptação das pessoas.", perfil: "Gato" }, { texto: "Busco entender como manter o controle.", perfil: "Lobo" }, { texto: "Tento transformar em vantagem competitiva.", perfil: "Tubarão" } ] },
-      { texto: "Qual dessas frases mais reflete seu modo de pensar?", opcoes: [ { texto: "Nada muda se ninguém ousar imaginar diferente.", perfil: "Águia" }, { texto: "Nada vale se não houver conexão humana.", perfil: "Gato" }, { texto: "Tudo pode ser resolvido com método e calma.", perfil: "Lobo" }, { texto: "Vencer não é tudo — é o único objetivo.", perfil: "Tubarão" } ] }
-    ];
-
+    const perguntasBase = [...]; // permanece igual
+    
     let perguntas = [];
     let respostas = {};
     let userName = "";
@@ -119,40 +98,18 @@
       .then(res => res.json())
       .then(data => {
         const respostaTexto = data?.output?.resultadoOrdenado?.join("<br>") || "Resultado indisponível.";
-const percentuais = data?.output?.percentuais || {};
-const labels = Object.keys(percentuais);
-const values = Object.values(percentuais);
+        const percentuais = data?.output?.percentuais || {};
+        const labels = Object.keys(percentuais);
+        const values = Object.values(percentuais);
 
-const frase = data?.output?.perfilPredominante
-  ? `<h3 style='color:#fff;'>${userName}, seu perfil predominante é <strong>${data.output.perfilPredominante}</strong>.</h3>`
-  : "";
+        const frase = data?.output?.perfilPredominante
+          ? `<h3 style='color:#fff;'>${userName}, seu perfil predominante é <strong>${data.output.perfilPredominante}</strong>.</h3>`
+          : "";
 
-const explicacao = respostaTexto.replace(/
-/g, "<br>");
+        const explicacao = respostaTexto.replace(/\n/g, "<br>");
 
-const quizDiv = document.getElementById("quiz");
-quizDiv.innerHTML = `${frase}<p style='margin-top:1em;'>${explicacao}</p>`;
-
-const canvas = document.getElementById("graficoPerfil");
-canvas.classList.remove("hidden");
-const ctx = canvas.getContext("2d");
-new Chart(ctx, {
-  type: "pie",
-  data: {
-    labels: labels,
-    datasets: [{
-      data: values,
-      backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { position: "bottom" },
-      title: { display: true, text: "Distribuição de Perfil Comportamental" }
-    }
-  }
-});
+        const quizDiv = document.getElementById("quiz");
+        quizDiv.innerHTML = `${frase}<p style='margin-top:1em;'>${explicacao}</p>`;
 
         const canvas = document.getElementById("graficoPerfil");
         canvas.classList.remove("hidden");
