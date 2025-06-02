@@ -37,9 +37,6 @@
     input[type="radio"] {
       margin-right: 8px;
     }
-    .container {
-      margin-top: 20px;
-    }
     .progress-bar {
       height: 10px;
       background-color: #333;
@@ -74,7 +71,7 @@
   <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
   
   <script>
-    // Array de perguntas base - exemplo de estrutura correta
+    // Array completo com as 20 perguntas originais
     const perguntasBase = [
       {
         texto: "Como você prefere trabalhar em equipe?",
@@ -93,8 +90,169 @@
           { texto: "Busco consenso e apoio", perfil: "estavel" },
           { texto: "Transformo-os em oportunidades", perfil: "influente" }
         ]
+      },
+      {
+        texto: "O que mais te motiva no trabalho?",
+        opcoes: [
+          { texto: "Resultados e conquistas", perfil: "dominante" },
+          { texto: "Precisão e qualidade", perfil: "analitico" },
+          { texto: "Estabilidade e previsibilidade", perfil: "estavel" },
+          { texto: "Reconhecimento e interação social", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você toma decisões importantes?",
+        opcoes: [
+          { texto: "Rapidamente, baseado em objetivos", perfil: "dominante" },
+          { texto: "Após análise detalhada dos fatos", perfil: "analitico" },
+          { texto: "Considerando o impacto nas pessoas", perfil: "estavel" },
+          { texto: "Seguindo intuição e sentimentos", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você reage a mudanças?",
+        opcoes: [
+          { texto: "Vejo como oportunidade para avançar", perfil: "dominante" },
+          { texto: "Avalio cuidadosamente os prós e contras", perfil: "analitico" },
+          { texto: "Prefiro adaptação gradual e planejada", perfil: "estavel" },
+          { texto: "Abraço com entusiasmo novas possibilidades", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você prefere se comunicar?",
+        opcoes: [
+          { texto: "Direto e objetivo, indo ao ponto", perfil: "dominante" },
+          { texto: "Detalhado e preciso, com fatos", perfil: "analitico" },
+          { texto: "Diplomático e atencioso", perfil: "estavel" },
+          { texto: "Expressivo e animado", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "O que mais te incomoda?",
+        opcoes: [
+          { texto: "Perder tempo ou controle", perfil: "dominante" },
+          { texto: "Imprecisão ou falta de detalhes", perfil: "analitico" },
+          { texto: "Conflitos e instabilidade", perfil: "estavel" },
+          { texto: "Rotina e falta de interação", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você lida com conflitos?",
+        opcoes: [
+          { texto: "Enfrento diretamente para resolver logo", perfil: "dominante" },
+          { texto: "Analiso as causas e busco soluções lógicas", perfil: "analitico" },
+          { texto: "Busco compromisso e harmonia", perfil: "estavel" },
+          { texto: "Uso humor e carisma para aliviar tensões", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você organiza seu trabalho?",
+        opcoes: [
+          { texto: "Foco em resultados e prazos", perfil: "dominante" },
+          { texto: "Sigo processos e sistemas organizados", perfil: "analitico" },
+          { texto: "Mantenho rotinas estáveis e previsíveis", perfil: "estavel" },
+          { texto: "Adapto conforme necessário, com flexibilidade", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "O que você valoriza em um ambiente de trabalho?",
+        opcoes: [
+          { texto: "Autonomia e oportunidades de liderança", perfil: "dominante" },
+          { texto: "Ordem, clareza e precisão", perfil: "analitico" },
+          { texto: "Segurança e ambiente harmonioso", perfil: "estavel" },
+          { texto: "Criatividade e interação social", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você reage sob pressão?",
+        opcoes: [
+          { texto: "Mantenho foco e tomo decisões rápidas", perfil: "dominante" },
+          { texto: "Analiso a situação metodicamente", perfil: "analitico" },
+          { texto: "Mantenho a calma e busco apoio", perfil: "estavel" },
+          { texto: "Uso otimismo e adaptabilidade", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "O que você busca em um projeto?",
+        opcoes: [
+          { texto: "Desafios e resultados concretos", perfil: "dominante" },
+          { texto: "Clareza e processos bem definidos", perfil: "analitico" },
+          { texto: "Estabilidade e cooperação em equipe", perfil: "estavel" },
+          { texto: "Inovação e oportunidades criativas", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você prefere receber feedback?",
+        opcoes: [
+          { texto: "Direto e focado em resultados", perfil: "dominante" },
+          { texto: "Detalhado e baseado em fatos", perfil: "analitico" },
+          { texto: "Construtivo e com suporte", perfil: "estavel" },
+          { texto: "Positivo e entusiástico", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "O que te dá mais satisfação no trabalho?",
+        opcoes: [
+          { texto: "Superar desafios e atingir metas", perfil: "dominante" },
+          { texto: "Resolver problemas complexos", perfil: "analitico" },
+          { texto: "Contribuir para o bem-estar da equipe", perfil: "estavel" },
+          { texto: "Inspirar e motivar pessoas", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você lida com prazos?",
+        opcoes: [
+          { texto: "Estabeleço metas claras e cumpro antes", perfil: "dominante" },
+          { texto: "Planejo detalhadamente cada etapa", perfil: "analitico" },
+          { texto: "Mantenho ritmo constante e previsível", perfil: "estavel" },
+          { texto: "Trabalho intensamente próximo ao prazo", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você prefere aprender?",
+        opcoes: [
+          { texto: "Na prática, com desafios reais", perfil: "dominante" },
+          { texto: "Estudando detalhadamente o assunto", perfil: "analitico" },
+          { texto: "Passo a passo, com orientação", perfil: "estavel" },
+          { texto: "Em grupo, com interação e discussão", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "O que você prioriza em um projeto?",
+        opcoes: [
+          { texto: "Resultados e eficiência", perfil: "dominante" },
+          { texto: "Qualidade e precisão", perfil: "analitico" },
+          { texto: "Cooperação e harmonia", perfil: "estavel" },
+          { texto: "Criatividade e inovação", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você contribui em reuniões?",
+        opcoes: [
+          { texto: "Direcionando e mantendo o foco", perfil: "dominante" },
+          { texto: "Analisando dados e questionando detalhes", perfil: "analitico" },
+          { texto: "Ouvindo atentamente e mediando", perfil: "estavel" },
+          { texto: "Gerando ideias e entusiasmando o grupo", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "Como você reage a obstáculos?",
+        opcoes: [
+          { texto: "Enfrento-os diretamente e persisto", perfil: "dominante" },
+          { texto: "Analiso alternativas e busco soluções", perfil: "analitico" },
+          { texto: "Adapto-me pacientemente à situação", perfil: "estavel" },
+          { texto: "Busco apoio e novas abordagens", perfil: "influente" }
+        ]
+      },
+      {
+        texto: "O que você considera ao tomar decisões?",
+        opcoes: [
+          { texto: "Resultados e eficiência", perfil: "dominante" },
+          { texto: "Lógica e análise de dados", perfil: "analitico" },
+          { texto: "Impacto nas pessoas e harmonia", perfil: "estavel" },
+          { texto: "Intuição e possibilidades futuras", perfil: "influente" }
+        ]
       }
-      // Adicione mais perguntas conforme necessário
     ];
     
     let perguntas = [];
@@ -166,7 +324,7 @@
         html += `<label><input type="radio" name="resposta" value="${op.letra}" /> ${op.letra}) ${op.texto}</label>`;
       });
       
-      html += `<div class="container"><button id="next-button">Próxima</button></div>`;
+      html += `<div class="container" style="margin-top: 15px;"><button id="next-button">Próxima</button></div>`;
       
       document.getElementById("question-container").innerHTML = html;
       
@@ -219,7 +377,7 @@
         document.getElementById("question-container").innerHTML = `
           ${frase}
           <p style='margin-top:1em;'>${explicacao}</p>
-          <div class="container">
+          <div class="container" style="margin-top: 20px;">
             <button id="restart-button">Refazer Teste</button>
           </div>
         `;
@@ -260,7 +418,7 @@
       .catch(err => {
         document.getElementById("question-container").innerHTML = `
           <p>Erro ao enviar os dados. Por favor, tente novamente.</p>
-          <div class="container">
+          <div class="container" style="margin-top: 15px;">
             <button id="retry-button">Tentar Novamente</button>
           </div>
         `;
