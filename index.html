@@ -31,7 +31,7 @@
   <h2>Teste de Perfil Comportamental 🧠</h2>
 
   <label for="name">Digite seu nome completo para começar:</label><br>
-  <input type="text" id="name" placeholder="Seu nome aqui"/><br>
+  <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name"/><br>
   <button onclick="startTest()">Começar</button>
 
   <div id="chat" class="hidden"></div>
@@ -114,6 +114,7 @@
         console.log("Resposta recebida:", data); // DEBUG
 
         let resposta = "";
+
         if (Array.isArray(data) && data.length > 0) {
           resposta = data[0].response || data[0].output;
         } else if (typeof data === "object") {
