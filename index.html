@@ -62,6 +62,16 @@
       font-weight: bold;
       font-size: 1.2em;
     }
+    #debug-info {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #333;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -89,6 +99,7 @@
     <div class="container" style="margin-top: 20px;">
       <button id="restart-button">Refazer Teste</button>
     </div>
+    <div id="debug-info"></div>
   </div>
   
   <script>
@@ -281,6 +292,7 @@
     let userName = "";
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
+    let debugMode = false; // Ativar para mostrar informações de debug
 
     // Função para embaralhar arrays
     function embaralhar(array) {
@@ -369,52 +381,87 @@
       mostrarPergunta(perguntaAtual);
     }
 
-    // Função para extrair o objeto JSON real da resposta
-    function extrairDadosJSON(data) {
-      // Caso 1: Já é um objeto com a estrutura esperada
-      if (data && data.output && data.output.resultadoOrdenado) {
-        console.log("Formato de dados: objeto direto");
-        return data;
+    // Função para extrair informações específicas da resposta
+    function extrairInformacoesEspecificas(data) {
+      // Ativar modo de debug para mostrar informações
+      if (debugMode) {
+        document.getElementById("debug-info").style.display = "block";
+        document.getElementById("debug-info").textContent = "Dados recebidos: " + JSON.stringify(data, null, 2);
       }
       
-      // Caso 2: Resposta está na propriedade 'response' como string JSON
-      if (data && data.response && typeof data.response === 'string') {
-        try {
-          // Tentar extrair o JSON da string de resposta (formato markdown)
-          const match = data.response.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-          if (match && match[1]) {
-            const parsedData = JSON.parse(match[1]);
-            console.log("Formato de dados: JSON extraído de markdown");
-            return parsedData;
+      // Criar objeto de resultado
+      const resultado = {
+        userName: "",
+        resultadoOrdenado: [],
+        percentuais: {},
+        perfilPredominante: ""
+      };
+      
+      try {
+        // Procurar por propriedade 'response' que contém a string JSON
+        if (data && data.response && typeof data.response === 'string') {
+          // Extrair o JSON da string de resposta
+          const jsonString = data.response;
+          
+          // Extrair nome do usuário
+          const userNameMatch = jsonString.match(/"userName"\s*:\s*"([^"]+)"/);
+          if (userNameMatch && userNameMatch[1]) {
+            resultado.userName = userNameMatch[1];
           }
-        } catch (e) {
-          console.error("Erro ao analisar resposta markdown:", e);
+          
+          // Extrair perfil predominante
+          const perfilMatch = jsonString.match(/"perfilPredominante"\s*:\s*"([^"]+)"/);
+          if (perfilMatch && perfilMatch[1]) {
+            resultado.perfilPredominante = perfilMatch[1];
+          }
+          
+          // Extrair resultados ordenados
+          const resultadosMatch = jsonString.match(/"resultadoOrdenado"\s*:\s*\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/);
+          if (resultadosMatch) {
+            resultado.resultadoOrdenado = [
+              resultadosMatch[1],
+              resultadosMatch[2],
+              resultadosMatch[3],
+              resultadosMatch[4]
+            ];
+          }
+          
+          // Extrair percentuais
+          const aguiaMatch = jsonString.match(/"Águia"\s*:\s*(\d+)/);
+          const gatoMatch = jsonString.match(/"Gato"\s*:\s*(\d+)/);
+          const loboMatch = jsonString.match(/"Lobo"\s*:\s*(\d+)/);
+          const tubaraoMatch = jsonString.match(/"Tubarão"\s*:\s*(\d+)/);
+          
+          if (aguiaMatch) resultado.percentuais["Águia"] = parseInt(aguiaMatch[1]);
+          if (gatoMatch) resultado.percentuais["Gato"] = parseInt(gatoMatch[1]);
+          if (loboMatch) resultado.percentuais["Lobo"] = parseInt(loboMatch[1]);
+          if (tubaraoMatch) resultado.percentuais["Tubarão"] = parseInt(tubaraoMatch[1]);
+        }
+      } catch (e) {
+        console.error("Erro ao extrair informações:", e);
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
         }
       }
       
-      // Caso 3: Tentar analisar qualquer string que pareça JSON
-      if (typeof data === 'string') {
-        try {
-          const cleanedString = data.replace(/^```json\s*|\s*```$/g, '');
-          const parsedData = JSON.parse(cleanedString);
-          console.log("Formato de dados: string JSON");
-          return parsedData;
-        } catch (e) {
-          console.error("Erro ao analisar string JSON:", e);
-        }
+      // Usar valores padrão se não conseguir extrair
+      resultado.userName = resultado.userName || userName;
+      
+      // Verificar se temos dados suficientes
+      const temDadosSuficientes = 
+        resultado.perfilPredominante && 
+        resultado.resultadoOrdenado.length > 0 && 
+        Object.keys(resultado.percentuais).length > 0;
+      
+      if (debugMode) {
+        document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + JSON.stringify(resultado, null, 2);
+        document.getElementById("debug-info").textContent += "\n\nDados suficientes: " + temDadosSuficientes;
       }
       
-      // Caso 4: Procurar por qualquer propriedade que contenha 'output'
-      for (const key in data) {
-        if (data[key] && typeof data[key] === 'object' && data[key].output) {
-          console.log("Formato de dados: propriedade aninhada", key);
-          return data[key];
-        }
-      }
-      
-      // Retornar os dados originais se nenhuma extração for bem-sucedida
-      console.log("Formato de dados: desconhecido, usando original");
-      return data;
+      return {
+        output: resultado,
+        temDadosSuficientes: temDadosSuficientes
+      };
     }
 
     // Função para exibir os resultados na tela
@@ -426,19 +473,17 @@
       const resultadoContainer = document.getElementById("resultado-container");
       resultadoContainer.classList.remove("hidden");
       
-      // Extrair o objeto JSON real da resposta
-      const dadosProcessados = extrairDadosJSON(data);
+      // Extrair informações específicas da resposta
+      const { output, temDadosSuficientes } = extrairInformacoesEspecificas(data);
       
       // Verificar se temos dados válidos
-      if (!dadosProcessados || !dadosProcessados.output) {
+      if (!temDadosSuficientes) {
         document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
         document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
-        console.error("Dados inválidos após processamento:", dadosProcessados);
         return;
       }
       
       // Extrair dados do resultado
-      const output = dadosProcessados.output;
       const nome = output.userName || userName;
       const perfilPredominante = output.perfilPredominante;
       const resultadoOrdenado = output.resultadoOrdenado || [];
@@ -544,6 +589,11 @@
     // Adicionar evento ao botão de início quando o DOM estiver carregado
     document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("start-button").addEventListener("click", startTest);
+      
+      // Verificar se há parâmetro de debug na URL
+      if (window.location.search.includes('debug=true')) {
+        debugMode = true;
+      }
     });
   </script>
   
