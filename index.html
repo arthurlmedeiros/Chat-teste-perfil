@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teste de Perfil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teste de Perfil Comportamental</title>
   <style>
     body {
       background-color: #000;
@@ -23,166 +23,110 @@
       cursor: pointer;
     }
     .hidden { display: none; }
-    canvas {
-      margin-top: 30px;
-    }
   </style>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
   <h2>Teste de Perfil Comportamental 🧠</h2>
 
   <label for="name">Digite seu nome completo para começar:</label><br>
-  <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name"/><br>
+  <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name" /><br>
   <button onclick="startTest()">Começar</button>
 
-  <div id="chat" class="hidden"></div>
-  <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
+  <div id="quiz" class="hidden"></div>
 
   <script>
-    let currentQuestion = 0;
-    let userAnswers = {};
-    let userName = "";
-
-    const questions = [
-      "1. Ao iniciar um novo projeto, o que é mais importante para você?\n\na) Ter uma visão clara do objetivo final e inspirar a equipe.\nb) Garantir que todos estejam se comunicando bem.\nc) Planejar cada etapa cuidadosamente.\nd) Focar nos resultados rapidamente.",
-      "2. Como você prefere trabalhar?\n\na) Com liberdade para ideias.\nb) Em colaboração com outros.\nc) Com plano bem definido.\nd) Em ambiente competitivo.",
-      "3. O que mais te motiva?\n\na) Criar algo inovador.\nb) Construir relacionamentos fortes.\nc) Ter tudo sob controle.\nd) Atingir metas desafiadoras.",
-      "4. Como você lida com mudanças inesperadas?\n\na) Vejo como oportunidade.\nb) Penso nas pessoas.\nc) Ajusto o plano.\nd) Adapto rápido pelo resultado.",
-      "5. Qual ambiente de trabalho você prefere?\n\na) Criativo e autônomo.\nb) Colaborativo e comunicativo.\nc) Organizado e com regras.\nd) Dinâmico e competitivo.",
-      "6. Ao tomar decisões, você geralmente:\n\na) Confia na intuição.\nb) Pensa no impacto nas pessoas.\nc) Analisa dados.\nd) Busca o resultado rápido.",
-      "7. O que você valoriza mais em uma equipe?\n\na) Visão e liberdade.\nb) Comunicação e apoio.\nc) Organização e prazos.\nd) Resultados e eficiência.",
-      "8. Como você reage a feedbacks?\n\na) Inspiração para ideias.\nb) Escuto para melhorar relações.\nc) Analiso objetivamente.\nd) Foco em melhorar resultados.",
-      "9. Qual seu maior foco ao realizar tarefas?\n\na) Impacto futuro.\nb) Conexão com o time.\nc) Execução correta.\nd) Eficiência e meta.",
-      "10. O que mais te incomoda?\n\na) Rotina e falta de criatividade.\nb) Conflitos interpessoais.\nc) Falta de organização.\nd) Perda de tempo e metas."
+    const perguntasBase = [
+      { texto: "Quando inicia um novo ciclo ou desafio, o que te guia naturalmente?", opcoes: [ { texto: "A ambição de alcançar o topo e superar metas.", perfil: "Tubarão" }, { texto: "Ter liberdade para criar algo original e significativo.", perfil: "Águia" }, { texto: "Garantir que todos se sintam acolhidos e ouvidos.", perfil: "Gato" }, { texto: "Um plano detalhado com etapas claras.", perfil: "Lobo" } ] },
+      { texto: "Em momentos de crise, sua primeira reação costuma ser:", opcoes: [ { texto: "Pensar em soluções criativas que ninguém considerou.", perfil: "Águia" }, { texto: "Ver como isso afetará as pessoas ao seu redor.", perfil: "Gato" }, { texto: "Mapear as causas e organizar uma resposta lógica.", perfil: "Lobo" }, { texto: "Agir com rapidez para minimizar perdas.", perfil: "Tubarão" } ] },
+      { texto: "Ao assumir a liderança em um projeto importante, o que mais te preocupa?", opcoes: [ { texto: "Ter liberdade para inovar.", perfil: "Águia" }, { texto: "Garantir que todos se sintam parte do processo.", perfil: "Gato" }, { texto: "Estruturar processos sólidos e eficientes.", perfil: "Lobo" }, { texto: "Cumprir prazos agressivos com excelência.", perfil: "Tubarão" } ] },
+      { texto: "O que te dá mais satisfação ao final de uma jornada ou projeto?", opcoes: [ { texto: "Ver que sua ideia inspirou ou mudou algo.", perfil: "Águia" }, { texto: "Saber que fortaleceu vínculos com pessoas importantes.", perfil: "Gato" }, { texto: "Observar que tudo correu conforme o planejado.", perfil: "Lobo" }, { texto: "Ver o resultado final superando metas.", perfil: "Tubarão" } ] },
+      { texto: "Quando recebe uma crítica construtiva, você tende a:", opcoes: [ { texto: "Usar como ponto de partida para algo novo.", perfil: "Águia" }, { texto: "Refletir sobre como melhorar relacionamentos.", perfil: "Gato" }, { texto: "Analisar com objetividade.", perfil: "Lobo" }, { texto: "Focar em melhorar para alcançar resultados.", perfil: "Tubarão" } ] },
+      { texto: "Ao tomar decisões difíceis, o que mais conta para você?", opcoes: [ { texto: "O que gera maior impacto inovador.", perfil: "Águia" }, { texto: "O que trará mais bem-estar coletivo.", perfil: "Gato" }, { texto: "O que é mais racional e previsível.", perfil: "Lobo" }, { texto: "O que traz resultados mais rápidos.", perfil: "Tubarão" } ] },
+      { texto: "O que mais te desgasta em uma rotina profissional?", opcoes: [ { texto: "Falta de espaço para criar.", perfil: "Águia" }, { texto: "Clima frio ou sem conexão humana.", perfil: "Gato" }, { texto: "Mudanças repentinas e falta de processo.", perfil: "Lobo" }, { texto: "Lentidão e falta de metas claras.", perfil: "Tubarão" } ] },
+      { texto: "Quando está em um ambiente novo, o que percebe primeiro?", opcoes: [ { texto: "As possibilidades de melhoria.", perfil: "Águia" }, { texto: "O clima emocional e as pessoas.", perfil: "Gato" }, { texto: "As regras e funcionamento do local.", perfil: "Lobo" }, { texto: "Quem se destaca e toma decisões.", perfil: "Tubarão" } ] },
+      { texto: "Qual elogio te deixaria mais satisfeito?", opcoes: [ { texto: "Sua visão abriu novos caminhos.", perfil: "Águia" }, { texto: "Você fez todos se sentirem importantes.", perfil: "Gato" }, { texto: "Tudo funcionou graças à sua organização.", perfil: "Lobo" }, { texto: "Você entregou mais do que o esperado.", perfil: "Tubarão" } ] },
+      { texto: "Se pudesse escolher qualquer função em uma equipe, você seria:", opcoes: [ { texto: "O idealizador de soluções.", perfil: "Águia" }, { texto: "O responsável pela harmonia do grupo.", perfil: "Gato" }, { texto: "O planejador e controlador de prazos.", perfil: "Lobo" }, { texto: "O executor que garante os resultados.", perfil: "Tubarão" } ] },
+      { texto: "Diante de um fracasso, o que você faz primeiro?", opcoes: [ { texto: "Redefine os objetivos com uma nova visão.", perfil: "Águia" }, { texto: "Oferece apoio aos envolvidos.", perfil: "Gato" }, { texto: "Revê todo o processo para entender o erro.", perfil: "Lobo" }, { texto: "Estabelece rapidamente o plano de recuperação.", perfil: "Tubarão" } ] },
+      { texto: "O que mais admira em colegas de trabalho?", opcoes: [ { texto: "Iniciativa e autenticidade.", perfil: "Águia" }, { texto: "Empatia e colaboração.", perfil: "Gato" }, { texto: "Precisão e responsabilidade.", perfil: "Lobo" }, { texto: "Determinação e foco em metas.", perfil: "Tubarão" } ] },
+      { texto: "Como você se comporta em um grupo novo?", opcoes: [ { texto: "Provoca reflexões e novas ideias.", perfil: "Águia" }, { texto: "Constrói laços rapidamente.", perfil: "Gato" }, { texto: "Observa atentamente antes de agir.", perfil: "Lobo" }, { texto: "Toma iniciativa para liderar.", perfil: "Tubarão" } ] },
+      { texto: "Quando pensa no seu legado, você deseja:", opcoes: [ { texto: "Ter mudado a forma como as pessoas pensam.", perfil: "Águia" }, { texto: "Ter tocado vidas com humanidade.", perfil: "Gato" }, { texto: "Ter deixado sistemas funcionando bem.", perfil: "Lobo" }, { texto: "Ter batido metas que pareciam impossíveis.", perfil: "Tubarão" } ] },
+      { texto: "O que te incomoda mais?", opcoes: [ { texto: "Rotina sem propósito.", perfil: "Águia" }, { texto: "Conflitos interpessoais.", perfil: "Gato" }, { texto: "Falta de clareza nos processos.", perfil: "Lobo" }, { texto: "Falta de ambição e agilidade.", perfil: "Tubarão" } ] },
+      { texto: "Qual dessas atitudes descreve melhor você?", opcoes: [ { texto: "Criar soluções inesperadas.", perfil: "Águia" }, { texto: "Cuidar do clima emocional.", perfil: "Gato" }, { texto: "Antecipar problemas com método.", perfil: "Lobo" }, { texto: "Tomar decisões firmes com rapidez.", perfil: "Tubarão" } ] },
+      { texto: "O que você mais valoriza em uma equipe?", opcoes: [ { texto: "Liberdade para inovar.", perfil: "Águia" }, { texto: "Conexão e escuta ativa.", perfil: "Gato" }, { texto: "Organização e disciplina.", perfil: "Lobo" }, { texto: "Alta performance.", perfil: "Tubarão" } ] },
+      { texto: "Quando algo sai errado:", opcoes: [ { texto: "Procuro uma nova abordagem criativa.", perfil: "Águia" }, { texto: "Reavalio meu papel no impacto nos outros.", perfil: "Gato" }, { texto: "Revisito os passos anteriores.", perfil: "Lobo" }, { texto: "Ajusto e sigo com foco no resultado.", perfil: "Tubarão" } ] },
+      { texto: "Durante mudanças organizacionais:", opcoes: [ { texto: "Enxergo oportunidades de reinventar.", perfil: "Águia" }, { texto: "Me preocupo com a adaptação das pessoas.", perfil: "Gato" }, { texto: "Busco entender como manter o controle.", perfil: "Lobo" }, { texto: "Tento transformar em vantagem competitiva.", perfil: "Tubarão" } ] },
+      { texto: "Qual dessas frases mais reflete seu modo de pensar?", opcoes: [ { texto: "Nada muda se ninguém ousar imaginar diferente.", perfil: "Águia" }, { texto: "Nada vale se não houver conexão humana.", perfil: "Gato" }, { texto: "Tudo pode ser resolvido com método e calma.", perfil: "Lobo" }, { texto: "Vencer não é tudo — é o único objetivo.", perfil: "Tubarão" } ] }
     ];
+
+    let perguntas = [];
+    let respostas = {};
+    let userName = "";
+    let perguntasEnviadas = [];
+
+    function embaralhar(array) {
+      return array.map(e => ({ e, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ e }) => e);
+    }
 
     function startTest() {
       userName = document.getElementById("name").value.trim();
-      if (!userName) {
-        alert("Por favor, insira seu nome.");
-        return;
-      }
+      if (!userName) return alert("Por favor, insira seu nome.");
 
-      document.querySelector("label[for='name']").style.display = "none";
-      document.getElementById("name").style.display = "none";
-      document.querySelector("button[onclick='startTest()']").style.display = "none";
+      perguntas = embaralhar(perguntasBase).map((p, idx) => {
+        const opcoes = embaralhar(p.opcoes);
+        const perfilPorLetra = {};
+        const letras = ["a", "b", "c", "d"];
+        opcoes.forEach((op, i) => op.letra = letras[i]);
+        opcoes.forEach(op => perfilPorLetra[op.letra] = op.perfil);
 
-      document.getElementById("chat").classList.remove("hidden");
-      askQuestion();
+        perguntasEnviadas.push({ id: idx, perfilPorLetra });
+        return { id: idx, texto: p.texto, opcoes };
+      });
+
+      document.querySelector("label").classList.add("hidden");
+      document.getElementById("name").classList.add("hidden");
+      document.querySelector("button").classList.add("hidden");
+
+      document.getElementById("quiz").classList.remove("hidden");
+      mostrarPergunta(0);
     }
 
-    function askQuestion() {
-      const chat = document.getElementById("chat");
-      if (currentQuestion < questions.length) {
-        const question = questions[currentQuestion];
-        chat.innerHTML = `
-          <p><strong>${question.replace(/\n/g, "<br>")}</strong></p>
-          <input id="answer" placeholder="Digite a, b, c ou d" onkeydown="handleEnter(event)" />
-          <button onclick="submitAnswer()">Enviar</button>
-        `;
-      } else {
-        chat.innerHTML = `<p>Calculando seu perfil... aguarde um instante.</p>`;
-        sendResults();
-      }
+    function mostrarPergunta(i) {
+      if (i >= perguntas.length) return enviarResultados();
+
+      const p = perguntas[i];
+      let html = `<p><strong>${i + 1}. ${p.texto}</strong></p>`;
+      p.opcoes.forEach(op => {
+        html += `<label><input type="radio" name="resposta" value="${op.letra}" /> ${op.letra}) ${op.texto}</label><br>`;
+      });
+      html += `<button onclick="registrarResposta(${i})">Próxima</button>`;
+      document.getElementById("quiz").innerHTML = html;
     }
 
-    function handleEnter(e) {
-      if (e.key === "Enter") {
-        submitAnswer();
-      }
+    function registrarResposta(i) {
+      const selecionada = document.querySelector("input[name='resposta']:checked");
+      if (!selecionada) return alert("Por favor, selecione uma resposta.");
+
+      respostas[i] = selecionada.value;
+      mostrarPergunta(i + 1);
     }
 
-    function submitAnswer() {
-      const answerEl = document.getElementById("answer");
-      if (!answerEl) return;
-      const answer = answerEl.value.trim().toLowerCase();
-      if (!["a", "b", "c", "d"].includes(answer)) {
-        alert("Por favor, responda com a, b, c ou d.");
-        return;
-      }
-      userAnswers[currentQuestion] = answer;
-      currentQuestion++;
-      askQuestion();
-    }
-
-    function sendResults() {
+    function enviarResultados() {
+      document.getElementById("quiz").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
       fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userName, userAnswers })
+        body: JSON.stringify({ userName, userAnswers: respostas, perguntasEnviadas })
       })
       .then(res => res.json())
       .then(data => {
-        console.log("Resposta recebida:", data);
-
-        let resposta = "";
-        if (typeof data === "object" && data !== null) {
-          if ("response" in data) {
-            resposta = data.response;
-          } else {
-            const chave = Object.keys(data)[0];
-            const valorInterno = data[chave];
-            if (valorInterno && typeof valorInterno === "object" && "response" in valorInterno) {
-              resposta = valorInterno.response;
-            }
-          }
-        }
-
-        const respostaTexto = String(resposta);
-        const chat = document.getElementById("chat");
-        chat.innerHTML = `
-          <p><strong>Resultado:</strong></p>
-          <pre style="white-space: pre-wrap; font-size: 0.95em; color: #ccc;">${respostaTexto}</pre>
-        `;
-
-        console.log("Resposta formatada:", respostaTexto);
-
-        const blocoInicial = respostaTexto.split("Percentuais:")[1]?.split("Organizando")[0]?.replace(/\r?\n/g, ' ') || "";
-        const matches = [...blocoInicial.matchAll(/-\s*(Águia|Gato|Lobo|Tubarão)[^0-9]*(\d{1,3})%/gi)];
-        console.log("Matches encontrados:", matches);
-
-        if (!matches || matches.length < 1) {
-          console.warn("⚠️ Nenhum percentual encontrado para montar o gráfico.");
-          return;
-        }
-
-        const labels = [], dataValues = [];
-        matches.forEach(match => {
-          const [_, label, valor] = match;
-          labels.push(label);
-          dataValues.push(parseInt(valor));
-        });
-
-        const canvas = document.getElementById("graficoPerfil");
-        canvas.classList.remove("hidden");
-        const ctx = canvas.getContext('2d');
-        new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: labels,
-            datasets: [{
-              data: dataValues,
-              backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom' },
-              title: { display: true, text: 'Distribuição de Perfil Comportamental' }
-            }
-          }
-        });
+        const resposta = data?.output?.resultadoOrdenado?.join("<br>") || JSON.stringify(data);
+        document.getElementById("quiz").innerHTML = `<p><strong>Resultado:</strong></p><p>${resposta}</p>`;
       })
-      .catch((err) => {
-        console.error("Erro ao enviar os dados:", err);
-        document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Veja o console para mais detalhes.</p>`;
+      .catch(err => {
+        document.getElementById("quiz").innerHTML = "<p>Erro ao enviar os dados.</p>";
+        console.error(err);
       });
     }
   </script>
-
 </body>
 </html>
