@@ -363,6 +363,7 @@
       })
       .then(res => res.json())
       .then(data => {
+        console.log("Resposta do servidor:", data); // Adicione esta linha
         const respostaTexto = data?.output?.resultadoOrdenado?.join("<br>") || "Resultado indisponível.";
         const percentuais = data?.output?.percentuais || {};
         const labels = Object.keys(percentuais);
