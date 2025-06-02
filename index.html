@@ -114,7 +114,7 @@
         console.log("Resposta recebida:", data);
         const resposta = data.response || data.output || Object.keys(data)[0] || "Obrigado por participar!";
         const chat = document.getElementById("chat");
-        chat.innerHTML = `<p><strong>Resultado:</strong><br>${resposta}</p>`;
+        chat.innerHTML = `<p><strong>Resultado:</strong><br>${resposta.replace(/\n/g, "<br>")}</p>`;
       })
       .catch(() => {
         document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Tente novamente.</p>`;
