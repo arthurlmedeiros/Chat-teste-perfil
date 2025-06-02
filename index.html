@@ -140,7 +140,7 @@
 
         console.log("Resposta formatada:", respostaTexto);
 
-        const matches = [...respostaTexto.matchAll(/[-–]\s*(Águia|Gato|Lobo|Tubarão)[^\d]*(\d{1,3})%/gi)];
+        const matches = [...respostaTexto.matchAll(/(Águia|Gato|Lobo|Tubarão)[^\d]*(\d{1,3})%/gi)];
         console.log("Matches encontrados:", matches);
         if (!matches || matches.length < 1) {
           console.warn("⚠️ Nenhum percentual encontrado para montar o gráfico.");
