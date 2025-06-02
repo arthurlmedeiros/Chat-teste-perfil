@@ -40,6 +40,19 @@
     let userAnswers = {};
     let userName = "";
 
+    const questions = [
+      "1. Ao iniciar um novo projeto, o que é mais importante para você?\n\na) Ter uma visão clara do objetivo final e inspirar a equipe.\nb) Garantir que todos estejam se comunicando bem.\nc) Planejar cada etapa cuidadosamente.\nd) Focar nos resultados rapidamente.",
+      "2. Como você prefere trabalhar?\n\na) Com liberdade para ideias.\nb) Em colaboração com outros.\nc) Com plano bem definido.\nd) Em ambiente competitivo.",
+      "3. O que mais te motiva?\n\na) Criar algo inovador.\nb) Construir relacionamentos fortes.\nc) Ter tudo sob controle.\nd) Atingir metas desafiadoras.",
+      "4. Como você lida com mudanças inesperadas?\n\na) Vejo como oportunidade.\nb) Penso nas pessoas.\nc) Ajusto o plano.\nd) Adapto rápido pelo resultado.",
+      "5. Qual ambiente de trabalho você prefere?\n\na) Criativo e autônomo.\nb) Colaborativo e comunicativo.\nc) Organizado e com regras.\nd) Dinâmico e competitivo.",
+      "6. Ao tomar decisões, você geralmente:\n\na) Confia na intuição.\nb) Pensa no impacto nas pessoas.\nc) Analisa dados.\nd) Busca o resultado rápido.",
+      "7. O que você valoriza mais em uma equipe?\n\na) Visão e liberdade.\nb) Comunicação e apoio.\nc) Organização e prazos.\nd) Resultados e eficiência.",
+      "8. Como você reage a feedbacks?\n\na) Inspiração para ideias.\nb) Escuto para melhorar relações.\nc) Analiso objetivamente.\nd) Foco em melhorar resultados.",
+      "9. Qual seu maior foco ao realizar tarefas?\n\na) Impacto futuro.\nb) Conexão com o time.\nc) Execução correta.\nd) Eficiência e meta.",
+      "10. O que mais te incomoda?\n\na) Rotina e falta de criatividade.\nb) Conflitos interpessoais.\nc) Falta de organização.\nd) Perda de tempo e metas."
+    ];
+
     function startTest() {
       userName = document.getElementById("name").value.trim();
       if (!userName) {
@@ -54,19 +67,6 @@
       document.getElementById("chat").classList.remove("hidden");
       askQuestion();
     }
-
-    const questions = [
-      "1. Ao iniciar um novo projeto, o que é mais importante para você?\n\na) Ter uma visão clara do objetivo final e inspirar a equipe.\nb) Garantir que todos estejam se comunicando bem.\nc) Planejar cada etapa cuidadosamente.\nd) Focar nos resultados rapidamente.",
-      "2. Como você prefere trabalhar?\n\na) Com liberdade para ideias.\nb) Em colaboração com outros.\nc) Com plano bem definido.\nd) Em ambiente competitivo.",
-      "3. O que mais te motiva?\n\na) Criar algo inovador.\nb) Construir relacionamentos fortes.\nc) Ter tudo sob controle.\nd) Atingir metas desafiadoras.",
-      "4. Como você lida com mudanças inesperadas?\n\na) Vejo como oportunidade.\nb) Penso nas pessoas.\nc) Ajusto o plano.\nd) Adapto rápido pelo resultado.",
-      "5. Qual ambiente de trabalho você prefere?\n\na) Criativo e autônomo.\nb) Colaborativo e comunicativo.\nc) Organizado e com regras.\nd) Dinâmico e competitivo.",
-      "6. Ao tomar decisões, você geralmente:\n\na) Confia na intuição.\nb) Pensa no impacto nas pessoas.\nc) Analisa dados.\nd) Busca o resultado rápido.",
-      "7. O que você valoriza mais em uma equipe?\n\na) Visão e liberdade.\nb) Comunicação e apoio.\nc) Organização e prazos.\nd) Resultados e eficiência.",
-      "8. Como você reage a feedbacks?\n\na) Inspiração para ideias.\nb) Escuto para melhorar relações.\nc) Analiso objetivamente.\nd) Foco em melhorar resultados.",
-      "9. Qual seu maior foco ao realizar tarefas?\n\na) Impacto futuro.\nb) Conexão com o time.\nc) Execução correta.\nd) Eficiência e meta.",
-      "10. O que mais te incomoda?\n\na) Rotina e falta de criatividade.\nb) Conflitos interpessoais.\nc) Falta de organização.\nd) Perda de tempo e metas."
-    ];
 
     function askQuestion() {
       const chat = document.getElementById("chat");
