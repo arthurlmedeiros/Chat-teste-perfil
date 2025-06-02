@@ -122,15 +122,11 @@
         if (typeof data === "object" && data !== null) {
           if ("response" in data) {
             resposta = data.response;
-          } else if ("output" in data) {
-            resposta = data.output;
           } else {
             const chave = Object.keys(data)[0];
             const valorInterno = data[chave];
             if (valorInterno && typeof valorInterno === "object" && "response" in valorInterno) {
               resposta = valorInterno.response;
-            } else {
-              resposta = valorInterno || chave || "Obrigado por participar!";
             }
           }
         }
