@@ -50,6 +50,18 @@
       width: 0%;
       transition: width 0.3s ease;
     }
+    .resultado-container {
+      margin-top: 20px;
+    }
+    .perfil-item {
+      margin: 5px 0;
+      font-size: 1.1em;
+    }
+    .perfil-predominante {
+      color: #007bff;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
   </style>
 </head>
 <body>
@@ -68,7 +80,16 @@
     <div id="question-container"></div>
   </div>
 
-  <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
+  <div id="resultado-container" class="hidden resultado-container">
+    <h3 id="perfil-titulo"></h3>
+    <div id="perfil-detalhes"></div>
+    <div id="grafico-container">
+      <canvas id="graficoPerfil" width="300" height="300"></canvas>
+    </div>
+    <div class="container" style="margin-top: 20px;">
+      <button id="restart-button">Refazer Teste</button>
+    </div>
+  </div>
   
   <script>
     // Array completo com as 20 perguntas originais
@@ -348,48 +369,59 @@
       mostrarPergunta(perguntaAtual);
     }
 
-    // Função para enviar resultados
-    function enviarResultados() {
-      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+    // Função para exibir os resultados na tela
+    function exibirResultados(data) {
+      // Esconder o quiz
+      document.getElementById("quiz").classList.add("hidden");
       
-      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userName, 
-          userAnswers: respostas, 
-          perguntasEnviadas 
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        console.log("Resposta do servidor:", data); // Adicione esta linha
-        const respostaTexto = data?.output?.resultadoOrdenado?.join("<br>") || "Resultado indisponível.";
-        const percentuais = data?.output?.percentuais || {};
+      // Mostrar o container de resultados
+      const resultadoContainer = document.getElementById("resultado-container");
+      resultadoContainer.classList.remove("hidden");
+      
+      // Verificar se temos dados válidos
+      if (!data || !data.output) {
+        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
+        document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
+        return;
+      }
+      
+      // Extrair dados do resultado
+      const output = data.output;
+      const nome = output.userName || userName;
+      const perfilPredominante = output.perfilPredominante;
+      const resultadoOrdenado = output.resultadoOrdenado || [];
+      const percentuais = output.percentuais || {};
+      
+      // Exibir título com perfil predominante
+      document.getElementById("perfil-titulo").innerHTML = `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
+      
+      // Exibir detalhes dos perfis
+      let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
+      
+      // Adicionar cada perfil como um item formatado
+      resultadoOrdenado.forEach((perfil, index) => {
+        const posicao = index === 0 ? "Predominante" : 
+                       index === 1 ? "Segundo" : 
+                       index === 2 ? "Terceiro" : "Último";
+        
+        detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
+      });
+      
+      detalhesHTML += "<p>Obrigado por participar do teste!</p>";
+      document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
+      
+      // Adicionar evento ao botão de reiniciar
+      document.getElementById("restart-button").addEventListener("click", function() {
+        location.reload();
+      });
+      
+      // Tentar criar o gráfico se Chart.js estiver disponível
+      try {
         const labels = Object.keys(percentuais);
         const values = Object.values(percentuais);
-
-        const frase = data?.output?.perfilPredominante
-          ? `<h3 style='color:#fff;'>${userName}, seu perfil predominante é <strong>${data.output.perfilPredominante}</strong>.</h3>`
-          : "";
-
-        const explicacao = respostaTexto.replace(/\n/g, "<br>");
-
-        document.getElementById("question-container").innerHTML = `
-          ${frase}
-          <p style='margin-top:1em;'>${explicacao}</p>
-          <div class="container" style="margin-top: 20px;">
-            <button id="restart-button">Refazer Teste</button>
-          </div>
-        `;
-
-        // Mostrar gráfico
-        const canvas = document.getElementById("graficoPerfil");
-        canvas.classList.remove("hidden");
         
-        // Verificar se Chart.js está carregado
-        if (typeof Chart !== 'undefined') {
-          const ctx = canvas.getContext("2d");
+        if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
+          const ctx = document.getElementById("graficoPerfil").getContext("2d");
           new Chart(ctx, {
             type: "pie",
             data: {
@@ -403,28 +435,53 @@
               responsive: true,
               plugins: {
                 legend: { position: "bottom" },
-                title: { display: true, text: "Distribuição de Perfil Comportamental" }
+                title: { 
+                  display: true, 
+                  text: "Distribuição de Perfil Comportamental",
+                  color: "#ffffff"
+                }
               }
             }
           });
-        } else {
-          console.error("Chart.js não está carregado");
         }
-        
-        // Adicionar evento ao botão de reiniciar
-        document.getElementById("restart-button").addEventListener("click", function() {
-          location.reload();
-        });
+      } catch (e) {
+        console.log("Erro ao criar gráfico:", e);
+      }
+    }
+
+    // Função para enviar resultados
+    function enviarResultados() {
+      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      
+      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          userName, 
+          userAnswers: respostas, 
+          lastUserMessage: perguntasEnviadas  // Renomeado para corresponder ao que o backend espera
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Resposta do servidor:", data);
+        // Chamar função para exibir resultados
+        exibirResultados(data);
       })
       .catch(err => {
-        document.getElementById("question-container").innerHTML = `
-          <p>Erro ao enviar os dados. Por favor, tente novamente.</p>
+        document.getElementById("quiz").classList.add("hidden");
+        document.getElementById("resultado-container").classList.remove("hidden");
+        document.getElementById("perfil-titulo").textContent = "Erro de conexão";
+        document.getElementById("perfil-detalhes").innerHTML = `
+          <p>Ocorreu um erro ao processar seu teste. Por favor, tente novamente.</p>
           <div class="container" style="margin-top: 15px;">
             <button id="retry-button">Tentar Novamente</button>
           </div>
         `;
         
         document.getElementById("retry-button").addEventListener("click", function() {
+          document.getElementById("resultado-container").classList.add("hidden");
+          document.getElementById("quiz").classList.remove("hidden");
           enviarResultados();
         });
         
@@ -438,7 +495,7 @@
     });
   </script>
   
-  <!-- Carregar Chart.js de forma mais confiável -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <!-- Adicionar Chart.js para o gráfico -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
