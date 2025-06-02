@@ -117,21 +117,22 @@
       .then(res => res.json())
       .then(data => {
         console.log("Resposta recebida:", data);
-        const resposta = data.response || data.output || Object.keys(data)[0] || "Obrigado por participar!";
-        
+        const resposta = data.output || data.response || Object.keys(data)[0] || "Obrigado por participar!";
+
         const chat = document.getElementById("chat");
         chat.innerHTML = `
           <p><strong>Resultado:</strong></p>
           <pre style="white-space: pre-wrap; font-size: 0.95em; color: #ccc;">${resposta}</pre>
         `;
 
-        const matches = resposta.match(/- (Águia|Gato|Lobo|Tubarão) \(.\): (\d+)%/g);
+        // Regex mais tolerante para detectar os percentuais
+        const matches = resposta.match(/- *(Águia|Gato|Lobo|Tubarão)[^\d]*(\d+)%/g);
         if (!matches) return;
 
         const labels = [], dataValues = [];
 
         matches.forEach(item => {
-          const [, label, valor] = item.match(/- (Águia|Gato|Lobo|Tubarão).*: (\d+)%/) || [];
+          const [, label, valor] = item.match(/- *(Águia|Gato|Lobo|Tubarão)[^\d]*(\d+)%/) || [];
           if (label && valor) {
             labels.push(label);
             dataValues.push(parseInt(valor));
