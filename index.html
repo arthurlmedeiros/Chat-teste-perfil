@@ -83,7 +83,7 @@
 
       document.querySelector("label").classList.add("hidden");
       document.getElementById("name").classList.add("hidden");
-      document.querySelector("button").classList.add("hidden");
+      document.querySelector("button[onclick='startTest()']").classList.add("hidden");
 
       document.getElementById("quiz").classList.remove("hidden");
       mostrarPergunta(0);
@@ -128,6 +128,7 @@ const frase = data?.output?.perfilPredominante
   : "";
 
 const explicacao = respostaTexto.replace(/
+/g, "<br>");
 /g, "<br>");
 
 const quizDiv = document.getElementById("quiz");
