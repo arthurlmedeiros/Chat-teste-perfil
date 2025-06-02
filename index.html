@@ -23,8 +23,12 @@
       cursor: pointer;
     }
     .hidden { display: none; }
+    canvas {
+      margin-top: 30px;
+    }
   </style>
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -35,6 +39,7 @@
   <button onclick="startTest()">Começar</button>
 
   <div id="chat" class="hidden"></div>
+  <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
 
   <script>
     let currentQuestion = 0;
@@ -111,10 +116,47 @@
       })
       .then(res => res.json())
       .then(data => {
-        console.log("Resposta recebida:", data);
         const resposta = data.response || data.output || Object.keys(data)[0] || "Obrigado por participar!";
         const chat = document.getElementById("chat");
-        chat.innerHTML = `<p><strong>Resultado:</strong><br>${resposta.replace(/\n/g, "<br>")}</p>`;
+        
+        // Mostra apenas a introdução do texto
+        const saudacao = resposta.split("\n")[0] || "Resultado:";
+        chat.innerHTML = `<p><strong>Resultado:</strong><br>${saudacao}</p>`;
+
+        // Tenta extrair os percentuais com regex
+        const matches = resposta.match(/- (Águia|Gato|Lobo|Tubarão) \(.\): (\d+)%/g);
+        if (!matches) return;
+
+        const labels = [], dataValues = [];
+
+        matches.forEach(item => {
+          const [, label, valor] = item.match(/- (Águia|Gato|Lobo|Tubarão).*: (\d+)%/) || [];
+          if (label && valor) {
+            labels.push(label);
+            dataValues.push(parseInt(valor));
+          }
+        });
+
+        const canvas = document.getElementById("graficoPerfil");
+        canvas.classList.remove("hidden");
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: dataValues,
+              backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' },
+              title: { display: true, text: 'Distribuição de Perfil Comportamental' }
+            }
+          }
+        });
       })
       .catch(() => {
         document.getElementById("chat").innerHTML = `<p>Erro ao enviar os dados. Tente novamente.</p>`;
