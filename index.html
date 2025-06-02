@@ -135,15 +135,15 @@
           }
         }
 
+        const respostaTexto = String(resposta);
+
         const chat = document.getElementById("chat");
         chat.innerHTML = `
           <p><strong>Resultado:</strong></p>
-          <pre style="white-space: pre-wrap; font-size: 0.95em; color: #ccc;">${resposta}</pre>
+          <pre style="white-space: pre-wrap; font-size: 0.95em; color: #ccc;">${respostaTexto}</pre>
         `;
 
-        console.log("Resposta formatada:", resposta);
-
-        const matches = resposta.match(/- *(Águia|Gato|Lobo|Tubarão)[^\d]*(\d+)%/g);
+        const matches = respostaTexto.match(/- *(Águia|Gato|Lobo|Tubarão)[^\d]*(\d+)%/g);
         console.log("Matches encontrados:", matches);
         if (!matches || matches.length < 1) {
           console.warn("⚠️ Nenhum percentual encontrado para montar o gráfico.");
@@ -151,7 +151,6 @@
         }
 
         const labels = [], dataValues = [];
-
         matches.forEach(item => {
           const [, label, valor] = item.match(/- *(Águia|Gato|Lobo|Tubarão)[^\d]*(\d+)%/) || [];
           if (label && valor) {
@@ -160,43 +159,27 @@
           }
         });
 
-        console.log("Labels:", labels);
-        console.log("Valores:", dataValues);
-
         const canvas = document.getElementById("graficoPerfil");
-        if (!canvas) {
-          console.error("❌ Canvas para gráfico não encontrado.");
-          return;
-        }
-
+        if (!canvas) return;
         canvas.classList.remove("hidden");
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          console.error("❌ Não foi possível obter o contexto do canvas.");
-          return;
-        }
-
-        try {
-          new Chart(ctx, {
-            type: 'pie',
-            data: {
-              labels: labels,
-              datasets: [{
-                data: dataValues,
-                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: 'bottom' },
-                title: { display: true, text: 'Distribuição de Perfil Comportamental' }
-              }
+        new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: dataValues,
+              backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' },
+              title: { display: true, text: 'Distribuição de Perfil Comportamental' }
             }
-          });
-        } catch (e) {
-          console.error("❌ Erro ao criar o gráfico:", e);
-        }
+          }
+        });
       })
       .catch((err) => {
         console.error("Erro ao enviar os dados:", err);
