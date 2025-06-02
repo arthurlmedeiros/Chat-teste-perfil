@@ -129,7 +129,6 @@ const frase = data?.output?.perfilPredominante
 
 const explicacao = respostaTexto.replace(/
 /g, "<br>");
-/g, "<br>");
 
 const quizDiv = document.getElementById("quiz");
 quizDiv.innerHTML = `${frase}<p style='margin-top:1em;'>${explicacao}</p>`;
