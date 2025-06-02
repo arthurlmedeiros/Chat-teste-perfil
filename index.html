@@ -119,7 +119,32 @@
       .then(res => res.json())
       .then(data => {
         const resposta = data?.output?.resultadoOrdenado?.join("<br>") || JSON.stringify(data);
+        const percentuais = data?.output?.percentuais || {};
+        const labels = Object.keys(percentuais);
+        const values = Object.values(percentuais);
+
         document.getElementById("quiz").innerHTML = `<p><strong>Resultado:</strong></p><p>${resposta}</p>`;
+
+        const canvas = document.getElementById("graficoPerfil");
+        canvas.classList.remove("hidden");
+        const ctx = canvas.getContext("2d");
+        new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: "bottom" },
+              title: { display: true, text: "Distribuição de Perfil Comportamental" }
+            }
+          }
+        });
       })
       .catch(err => {
         document.getElementById("quiz").innerHTML = "<p>Erro ao enviar os dados.</p>";
@@ -127,5 +152,7 @@
       });
     }
   </script>
+  <canvas id="graficoPerfil" class="hidden" width="300" height="300"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
