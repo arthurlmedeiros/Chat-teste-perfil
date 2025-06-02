@@ -369,6 +369,54 @@
       mostrarPergunta(perguntaAtual);
     }
 
+    // Função para extrair o objeto JSON real da resposta
+    function extrairDadosJSON(data) {
+      // Caso 1: Já é um objeto com a estrutura esperada
+      if (data && data.output && data.output.resultadoOrdenado) {
+        console.log("Formato de dados: objeto direto");
+        return data;
+      }
+      
+      // Caso 2: Resposta está na propriedade 'response' como string JSON
+      if (data && data.response && typeof data.response === 'string') {
+        try {
+          // Tentar extrair o JSON da string de resposta (formato markdown)
+          const match = data.response.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+          if (match && match[1]) {
+            const parsedData = JSON.parse(match[1]);
+            console.log("Formato de dados: JSON extraído de markdown");
+            return parsedData;
+          }
+        } catch (e) {
+          console.error("Erro ao analisar resposta markdown:", e);
+        }
+      }
+      
+      // Caso 3: Tentar analisar qualquer string que pareça JSON
+      if (typeof data === 'string') {
+        try {
+          const cleanedString = data.replace(/^```json\s*|\s*```$/g, '');
+          const parsedData = JSON.parse(cleanedString);
+          console.log("Formato de dados: string JSON");
+          return parsedData;
+        } catch (e) {
+          console.error("Erro ao analisar string JSON:", e);
+        }
+      }
+      
+      // Caso 4: Procurar por qualquer propriedade que contenha 'output'
+      for (const key in data) {
+        if (data[key] && typeof data[key] === 'object' && data[key].output) {
+          console.log("Formato de dados: propriedade aninhada", key);
+          return data[key];
+        }
+      }
+      
+      // Retornar os dados originais se nenhuma extração for bem-sucedida
+      console.log("Formato de dados: desconhecido, usando original");
+      return data;
+    }
+
     // Função para exibir os resultados na tela
     function exibirResultados(data) {
       // Esconder o quiz
@@ -378,15 +426,19 @@
       const resultadoContainer = document.getElementById("resultado-container");
       resultadoContainer.classList.remove("hidden");
       
+      // Extrair o objeto JSON real da resposta
+      const dadosProcessados = extrairDadosJSON(data);
+      
       // Verificar se temos dados válidos
-      if (!data || !data.output) {
+      if (!dadosProcessados || !dadosProcessados.output) {
         document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
         document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
+        console.error("Dados inválidos após processamento:", dadosProcessados);
         return;
       }
       
       // Extrair dados do resultado
-      const output = data.output;
+      const output = dadosProcessados.output;
       const nome = output.userName || userName;
       const perfilPredominante = output.perfilPredominante;
       const resultadoOrdenado = output.resultadoOrdenado || [];
