@@ -140,7 +140,7 @@
 
         console.log("Resposta formatada:", respostaTexto);
 
-        const matches = respostaTexto.match(/-\s*(Águia|Gato|Lobo|Tubarão).*?(\d{1,3})%/gi);
+        const matches = [...respostaTexto.matchAll(/[-–]\s*(Águia|Gato|Lobo|Tubarão)[^\d]*(\d{1,3})%/gi)];
         console.log("Matches encontrados:", matches);
         if (!matches || matches.length < 1) {
           console.warn("⚠️ Nenhum percentual encontrado para montar o gráfico.");
@@ -148,12 +148,10 @@
         }
 
         const labels = [], dataValues = [];
-        matches.forEach(item => {
-          const result = item.match(/-\s*(Águia|Gato|Lobo|Tubarão).*?(\d{1,3})%/i);
-          if (result && result[1] && result[2]) {
-            labels.push(result[1]);
-            dataValues.push(parseInt(result[2]));
-          }
+        matches.forEach(match => {
+          const [_, label, valor] = match;
+          labels.push(label);
+          dataValues.push(parseInt(valor));
         });
 
         const canvas = document.getElementById("graficoPerfil");
