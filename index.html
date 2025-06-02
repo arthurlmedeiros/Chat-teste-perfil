@@ -117,7 +117,23 @@
       .then(res => res.json())
       .then(data => {
         console.log("Resposta recebida:", data);
-        const resposta = data.output || data.response || Object.keys(data)[0] || "Obrigado por participar!";
+
+        // Corrigir estrutura com chave dinâmica
+        let resposta = "";
+        if (typeof data === "object" && data !== null) {
+          if ("response" in data) {
+            resposta = data.response;
+          } else if ("output" in data) {
+            resposta = data.output;
+          } else {
+            const unicaChave = Object.keys(data)[0];
+            if (unicaChave && data[unicaChave]?.response) {
+              resposta = data[unicaChave].response;
+            } else {
+              resposta = unicaChave || "Obrigado por participar!";
+            }
+          }
+        }
 
         const chat = document.getElementById("chat");
         chat.innerHTML = `
@@ -125,7 +141,6 @@
           <pre style="white-space: pre-wrap; font-size: 0.95em; color: #ccc;">${resposta}</pre>
         `;
 
-        // Regex mais tolerante para detectar os percentuais
         const matches = resposta.match(/- *(Águia|Gato|Lobo|Tubarão)[^\d]*(\d+)%/g);
         if (!matches) return;
 
