@@ -118,12 +118,41 @@
       })
       .then(res => res.json())
       .then(data => {
-        const resposta = data?.output?.resultadoOrdenado?.join("<br>") || JSON.stringify(data);
-        const percentuais = data?.output?.percentuais || {};
-        const labels = Object.keys(percentuais);
-        const values = Object.values(percentuais);
+        const respostaTexto = data?.output?.resultadoOrdenado?.join("<br>") || "Resultado indisponível.";
+const percentuais = data?.output?.percentuais || {};
+const labels = Object.keys(percentuais);
+const values = Object.values(percentuais);
 
-        document.getElementById("quiz").innerHTML = `<p><strong>Resultado:</strong></p><p>${resposta}</p>`;
+const frase = data?.output?.perfilPredominante
+  ? `<h3 style='color:#fff;'>${userName}, seu perfil predominante é <strong>${data.output.perfilPredominante}</strong>.</h3>`
+  : "";
+
+const explicacao = respostaTexto.replace(/
+/g, "<br>");
+
+const quizDiv = document.getElementById("quiz");
+quizDiv.innerHTML = `${frase}<p style='margin-top:1em;'>${explicacao}</p>`;
+
+const canvas = document.getElementById("graficoPerfil");
+canvas.classList.remove("hidden");
+const ctx = canvas.getContext("2d");
+new Chart(ctx, {
+  type: "pie",
+  data: {
+    labels: labels,
+    datasets: [{
+      data: values,
+      backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: "bottom" },
+      title: { display: true, text: "Distribuição de Perfil Comportamental" }
+    }
+  }
+});
 
         const canvas = document.getElementById("graficoPerfil");
         canvas.classList.remove("hidden");
