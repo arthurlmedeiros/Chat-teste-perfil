@@ -110,8 +110,16 @@
       })
       .then(res => res.json())
       .then(data => {
+        console.log("Resposta recebida:", data); // DEBUG
+
+        let resposta = "";
+        if (Array.isArray(data) && data.length > 0) {
+          resposta = data[0].response || data[0].output;
+        } else if (typeof data === "object") {
+          resposta = data.response || data.output;
+        }
+
         const chat = document.getElementById("chat");
-        const resposta = Array.isArray(data) ? data[0].response || data[0].output : data.response || data.output;
         chat.innerHTML = `<p><strong>Resultado:</strong><br>${resposta || "Obrigado por participar!"}</p>`;
       })
       .catch(() => {
