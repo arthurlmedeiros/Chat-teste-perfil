@@ -382,11 +382,11 @@
     }
 
     // Função para extrair informações da resposta
-    function extrairInformacoesResposta(data) {
+    function extrairInformacoesResposta(rawData) {
       // Ativar modo de debug para mostrar informações
       if (debugMode) {
         document.getElementById("debug-info").style.display = "block";
-        document.getElementById("debug-info").textContent = "Dados recebidos: " + JSON.stringify(data, null, 2);
+        document.getElementById("debug-info").textContent = "Dados recebidos: " + JSON.stringify(rawData, null, 2);
       }
       
       // Criar objeto de resultado
@@ -404,81 +404,62 @@
       
       try {
         // Converter para string se não for
-        const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
+        const dataStr = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
         
-        // Tentar extrair diretamente da resposta como string
-        if (dataStr) {
-          // Extrair resultadoOrdenado
-          const resultadosRegex = /"resultadoOrdenado"\s*:\s*\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/;
-          const resultadosMatch = dataStr.match(resultadosRegex);
-          
-          if (resultadosMatch) {
-            resultado.resultadoOrdenado = [
-              resultadosMatch[1],
-              resultadosMatch[2],
-              resultadosMatch[3],
-              resultadosMatch[4]
-            ];
-            
-            // Extrair perfil predominante do primeiro resultado
-            const perfilMatch = resultado.resultadoOrdenado[0].match(/^([^\s(]+)/);
-            if (perfilMatch) {
-              resultado.perfilPredominante = perfilMatch[1];
-            }
-          }
-          
-          // Extrair percentuais
-          const percentuaisRegex = /"percentuais"\s*:\s*{\s*"Águia"\s*:\s*(\d+)\s*,\s*"Gato"\s*:\s*(\d+)\s*,\s*"Lobo"\s*:\s*(\d+)\s*,\s*"Tubarão"\s*:\s*(\d+)\s*}/;
-          const percentuaisMatch = dataStr.match(percentuaisRegex);
-          
-          if (percentuaisMatch) {
-            resultado.percentuais["Águia"] = parseInt(percentuaisMatch[1]);
-            resultado.percentuais["Gato"] = parseInt(percentuaisMatch[2]);
-            resultado.percentuais["Lobo"] = parseInt(percentuaisMatch[3]);
-            resultado.percentuais["Tubarão"] = parseInt(percentuaisMatch[4]);
-          }
-          
-          // Extrair nome do usuário
-          const userNameRegex = /"userName"\s*:\s*"([^"]+)"/;
-          const userNameMatch = dataStr.match(userNameRegex);
-          
-          if (userNameMatch) {
-            resultado.userName = userNameMatch[1];
-          }
-          
-          // Extrair perfil predominante diretamente
-          if (!resultado.perfilPredominante) {
-            const perfilPredominanteRegex = /"perfilPredominante"\s*:\s*"([^"]+)"/;
-            const perfilPredominanteMatch = dataStr.match(perfilPredominanteRegex);
-            
-            if (perfilPredominanteMatch) {
-              resultado.perfilPredominante = perfilPredominanteMatch[1];
-            }
-          }
+        // Extrair apenas a primeira parte da resposta (antes de "response")
+        let mainPart = dataStr;
+        const responseIndex = dataStr.indexOf('"response"');
+        if (responseIndex > 0) {
+          mainPart = dataStr.substring(0, responseIndex);
         }
         
-        // Tentar extrair da propriedade response se existir
-        if (data && data.response && typeof data.response === 'string') {
-          const responseStr = data.response;
-          
-          // Extrair resultadoOrdenado
-          const resultadosRegex = /"resultadoOrdenado"\s*:\s*\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/;
-          const resultadosMatch = responseStr.match(resultadosRegex);
-          
-          if (resultadosMatch && !resultado.resultadoOrdenado.length) {
-            resultado.resultadoOrdenado = [
-              resultadosMatch[1],
-              resultadosMatch[2],
-              resultadosMatch[3],
-              resultadosMatch[4]
-            ];
-            
-            // Extrair perfil predominante do primeiro resultado
-            const perfilMatch = resultado.resultadoOrdenado[0].match(/^([^\s(]+)/);
-            if (perfilMatch) {
-              resultado.perfilPredominante = perfilMatch[1];
-            }
-          }
+        // Limpar a string de caracteres de formatação
+        mainPart = mainPart.replace(/\\n/g, ' ').replace(/\\"/g, '"');
+        
+        // Extrair nome do usuário
+        const userNameRegex = /"userName"\s*:\s*"([^"]+)"/;
+        const userNameMatch = mainPart.match(userNameRegex);
+        if (userNameMatch) {
+          resultado.userName = userNameMatch[1];
+        }
+        
+        // Extrair perfil predominante
+        const perfilPredominanteRegex = /"perfilPredominante"\s*:\s*"([^"]+)"/;
+        const perfilPredominanteMatch = mainPart.match(perfilPredominanteRegex);
+        if (perfilPredominanteMatch) {
+          resultado.perfilPredominante = perfilPredominanteMatch[1];
+        }
+        
+        // Extrair percentuais diretamente
+        const aguiaRegex = /"Águia"\s*:\s*(\d+)/;
+        const gatoRegex = /"Gato"\s*:\s*(\d+)/;
+        const loboRegex = /"Lobo"\s*:\s*(\d+)/;
+        const tubaraoRegex = /"Tubarão"\s*:\s*(\d+)/;
+        
+        const aguiaMatch = mainPart.match(aguiaRegex);
+        const gatoMatch = mainPart.match(gatoRegex);
+        const loboMatch = mainPart.match(loboRegex);
+        const tubaraoMatch = mainPart.match(tubaraoRegex);
+        
+        if (aguiaMatch) resultado.percentuais["Águia"] = parseInt(aguiaMatch[1]);
+        if (gatoMatch) resultado.percentuais["Gato"] = parseInt(gatoMatch[1]);
+        if (loboMatch) resultado.percentuais["Lobo"] = parseInt(loboMatch[1]);
+        if (tubaraoMatch) resultado.percentuais["Tubarão"] = parseInt(tubaraoMatch[1]);
+        
+        // Construir resultadoOrdenado manualmente a partir dos percentuais
+        const percentuaisArray = Object.entries(resultado.percentuais)
+          .map(([nome, valor]) => ({ nome, valor }))
+          .sort((a, b) => b.valor - a.valor);
+        
+        resultado.resultadoOrdenado = percentuaisArray.map(item => `${item.nome} (${item.valor}%)`);
+        
+        // Se não temos perfil predominante, usar o primeiro do array ordenado
+        if (!resultado.perfilPredominante && percentuaisArray.length > 0) {
+          resultado.perfilPredominante = percentuaisArray[0].nome;
+        }
+        
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + JSON.stringify(resultado, null, 2);
         }
       } catch (e) {
         console.error("Erro ao extrair informações:", e);
@@ -489,11 +470,11 @@
       
       // Verificar se temos dados suficientes
       const temDadosSuficientes = 
+        resultado.perfilPredominante && 
         resultado.resultadoOrdenado.length > 0 && 
-        resultado.perfilPredominante;
+        Object.values(resultado.percentuais).some(v => v > 0);
       
       if (debugMode) {
-        document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + JSON.stringify(resultado, null, 2);
         document.getElementById("debug-info").textContent += "\n\nDados suficientes: " + temDadosSuficientes;
       }
       
@@ -607,18 +588,8 @@
       .then(rawData => {
         console.log("Resposta do servidor (texto bruto):", rawData);
         
-        // Tentar converter para JSON, mas manter como string se falhar
-        let data;
-        try {
-          data = JSON.parse(rawData);
-          console.log("Resposta do servidor (JSON):", data);
-        } catch (e) {
-          console.log("Não foi possível converter para JSON, usando texto bruto");
-          data = rawData;
-        }
-        
-        // Chamar função para exibir resultados
-        exibirResultados(data);
+        // Chamar função para exibir resultados com o texto bruto
+        exibirResultados(rawData);
       })
       .catch(err => {
         document.getElementById("quiz").classList.add("hidden");
