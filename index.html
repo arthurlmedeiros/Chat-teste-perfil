@@ -479,57 +479,92 @@
 
     // Função para enviar resultados
     function enviarResultados() {
+      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      
+      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          userName, 
+          userEmail, // Incluir e-mail nos dados enviados
+          userAnswers: respostas, 
+          lastUserMessage: perguntasEnviadas  // Renomeado para corresponder ao que o backend espera
+        })
+      })
+      .then(res => res.text())  // Importante: usar text() em vez de json()
+      .then(rawData => {
+        console.log("Resposta do servidor (texto bruto):", rawData);
+        
+        // Chamar função para exibir resultados com o texto bruto
+        exibirResultados(rawData);
+      })
+      .catch(err => {
+        document.getElementById("quiz").classList.add("hidden");
+        document.getElementById("resultado-container").classList.remove("hidden");
+        document.getElementById("perfil-titulo").textContent = "Erro de conexão";
+        document.getElementById("perfil-detalhes").innerHTML = `
+          <p>Ocorreu um erro ao processar seu teste. Por favor, tente novamente.</p>
+          <div class="container" style="margin-top: 15px;">
+            <button id="retry-button">Tentar Novamente</button>
+          </div>
+        `;
+        
+        document.getElementById("retry-button").addEventListener("click", function() {
+          document.getElementById("resultado-container").classList.add("hidden");
+          document.getElementById("quiz").classList.remove("hidden");
+          enviarResultados();
+        });
+        
+        console.error("Erro:", err);
+      });
+    }
+
+    // Função para mostrar resultado
+    function exibirResultados(rawData) {
       // Esconder quiz
       document.getElementById("quiz").classList.add("hidden");
       
       // Mostrar container de resultado
       document.getElementById("resultado-container").classList.remove("hidden");
       
-      // Preparar dados para envio
-      const dadosEnvio = {
-        userName: userName,
-        userEmail: userEmail, // Incluir e-mail nos dados de envio
-        respostas: respostas,
-        perguntasEnviadas: perguntasEnviadas
-      };
-      
-      // Simular resposta do servidor (em produção, isso seria uma chamada real à API)
-      const respostaSimulada = {
-        userName: userName,
-        userEmail: userEmail, // Incluir e-mail na resposta simulada
-        percentuais: {
-          "Águia": 30,
-          "Gato": 20,
-          "Lobo": 25,
-          "Tubarão": 25
-        },
-        perfilPredominante: "Águia"
-      };
-      
       // Processar resposta
-      const resultado = extrairInformacoesResposta(respostaSimulada);
+      const output = extrairInformacoesResposta(rawData);
       
-      // Mostrar resultado
-      mostrarResultado(resultado);
-    }
-
-    // Função para mostrar resultado
-    function mostrarResultado(resultado) {
-      // Definir título
-      document.getElementById("perfil-titulo").textContent = `${resultado.userName}, seu perfil predominante é: ${resultado.perfilPredominante}`;
+      // Verificar se há dados válidos
+      if (!output || !output.perfilPredominante) {
+        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
+        document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
+        
+        // Mostrar dados brutos em modo de debug
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(data);
+        }
+        return;
+      }
       
-      // Mostrar detalhes
-      let detalhesHTML = "<p>Seus resultados:</p>";
+      // Extrair dados do resultado
+      const nome = output.userName || userName;
+      const perfilPredominante = output.perfilPredominante;
+      const resultadoOrdenado = output.resultadoOrdenado || [];
+      const percentuais = output.percentuais || {};
       
-      resultado.resultadoOrdenado.forEach(item => {
-        const classeDestaque = item === resultado.resultadoOrdenado[0] ? "perfil-predominante" : "";
-        detalhesHTML += `<p class="perfil-item ${classeDestaque}">${item.perfil}: ${item.valor}%</p>`;
+      // Exibir título com perfil predominante
+      document.getElementById("perfil-titulo").innerHTML = `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
+      
+      // Exibir detalhes dos perfis
+      let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
+      
+      // Adicionar cada perfil como um item formatado
+      resultadoOrdenado.forEach((perfil, index) => {
+        const posicao = index === 0 ? "Predominante" : 
+                       index === 1 ? "Segundo" : 
+                       index === 2 ? "Terceiro" : "Último";
+        
+        detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil.perfil}</strong> (${perfil.valor}%)</p>`;
       });
       
+      detalhesHTML += "<p>Obrigado por participar do teste!</p>";
       document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
-      
-      // Criar gráfico
-      criarGrafico(resultado);
       
       // Adicionar evento ao botão de reiniciar
       document.getElementById("restart-button").addEventListener("click", function() {
@@ -539,62 +574,55 @@
         document.getElementById("email").value = userEmail; // Manter o e-mail preenchido
         respostas = {};
       });
+      
+      // Tentar criar o gráfico se Chart.js estiver disponível
+      try {
+        const labels = Object.keys(percentuais);
+        const values = Object.values(percentuais);
+        
+        if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
+          const ctx = document.getElementById("graficoPerfil").getContext("2d");
+          new Chart(ctx, {
+            type: "pie",
+            data: {
+              labels: labels,
+              datasets: [{
+                data: values,
+                backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: "bottom" },
+                title: { 
+                  display: true, 
+                  text: "Distribuição de Perfil Comportamental",
+                  color: "#ffffff"
+                }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.log("Erro ao criar gráfico:", e);
+      }
     }
 
-    // Função para criar gráfico
-    function criarGrafico(resultado) {
-      const canvas = document.getElementById("graficoPerfil");
-      const ctx = canvas.getContext("2d");
-      
-      // Limpar canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Configurações do gráfico
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const radius = Math.min(centerX, centerY) - 10;
-      
-      // Cores para cada perfil
-      const cores = {
-        "Águia": "#FF5733",
-        "Gato": "#33FF57",
-        "Lobo": "#3357FF",
-        "Tubarão": "#F3FF33"
-      };
-      
-      // Desenhar gráfico de pizza
-      let startAngle = 0;
-      
-      resultado.resultadoOrdenado.forEach(item => {
-        const sliceAngle = (item.valor / 100) * 2 * Math.PI;
-        
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
-        ctx.closePath();
-        
-        ctx.fillStyle = cores[item.perfil];
-        ctx.fill();
-        
-        // Adicionar texto
-        const midAngle = startAngle + sliceAngle / 2;
-        const textX = centerX + Math.cos(midAngle) * (radius * 0.7);
-        const textY = centerY + Math.sin(midAngle) * (radius * 0.7);
-        
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 12px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(`${item.perfil} ${item.valor}%`, textX, textY);
-        
-        startAngle += sliceAngle;
-      });
-    }
-
-    // Adicionar eventos quando a página carregar
+    // Adicionar evento ao botão de início quando o DOM estiver carregado
     document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("start-button").addEventListener("click", startTest);
+      
+      // Verificar se há parâmetro de debug na URL
+      if (window.location.search.includes('debug=true')) {
+        debugMode = true;
+        document.getElementById("debug-info").style.display = "block";
+        document.getElementById("debug-info").textContent = "Modo de debug ativado";
+      }
     });
   </script>
+  
+  <!-- Adicionar Chart.js para o gráfico -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
