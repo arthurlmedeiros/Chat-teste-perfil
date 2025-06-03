@@ -80,6 +80,8 @@
   <div id="intro-container">
     <label for="name">Digite seu nome completo para começar:</label><br>
     <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name" /><br>
+    <label for="email">Digite seu e-mail:</label><br>
+    <input type="email" id="email" placeholder="seu.email@exemplo.com" autocomplete="email" /><br>
     <button id="start-button">Começar</button>
   </div>
 
@@ -290,6 +292,7 @@
     let perguntas = [];
     let respostas = {};
     let userName = "";
+    let userEmail = ""; // Nova variável para armazenar o e-mail
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
     let debugMode = false; // Ativar para mostrar informações de debug
@@ -307,8 +310,23 @@
     // Função para iniciar o teste
     function startTest() {
       userName = document.getElementById("name").value.trim();
+      userEmail = document.getElementById("email").value.trim(); // Obter o valor do e-mail
+      
+      // Validar nome e e-mail
       if (!userName) {
         alert("Por favor, insira seu nome.");
+        return;
+      }
+      
+      if (!userEmail) {
+        alert("Por favor, insira seu e-mail.");
+        return;
+      }
+      
+      // Validação básica de formato de e-mail
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userEmail)) {
+        alert("Por favor, insira um e-mail válido.");
         return;
       }
 
@@ -392,6 +410,7 @@
       // Criar objeto de resultado
       const resultado = {
         userName: userName,
+        userEmail: userEmail, // Incluir e-mail no resultado
         resultadoOrdenado: [],
         percentuais: {
           "Águia": 0,
@@ -446,186 +465,136 @@
         if (loboMatch) resultado.percentuais["Lobo"] = parseInt(loboMatch[1]);
         if (tubaraoMatch) resultado.percentuais["Tubarão"] = parseInt(tubaraoMatch[1]);
         
-        // Construir resultadoOrdenado manualmente a partir dos percentuais
-        const percentuaisArray = Object.entries(resultado.percentuais)
-          .map(([nome, valor]) => ({ nome, valor }))
+        // Criar array ordenado de resultados
+        resultado.resultadoOrdenado = Object.entries(resultado.percentuais)
+          .map(([perfil, valor]) => ({ perfil, valor }))
           .sort((a, b) => b.valor - a.valor);
         
-        resultado.resultadoOrdenado = percentuaisArray.map(item => `${item.nome} (${item.valor}%)`);
-        
-        // Se não temos perfil predominante, usar o primeiro do array ordenado
-        if (!resultado.perfilPredominante && percentuaisArray.length > 0) {
-          resultado.perfilPredominante = percentuaisArray[0].nome;
-        }
-        
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + JSON.stringify(resultado, null, 2);
-        }
-      } catch (e) {
-        console.error("Erro ao extrair informações:", e);
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
-        }
-      }
-      
-      // Verificar se temos dados suficientes
-      const temDadosSuficientes = 
-        resultado.perfilPredominante && 
-        resultado.resultadoOrdenado.length > 0 && 
-        Object.values(resultado.percentuais).some(v => v > 0);
-      
-      if (debugMode) {
-        document.getElementById("debug-info").textContent += "\n\nDados suficientes: " + temDadosSuficientes;
-      }
-      
-      return {
-        output: resultado,
-        temDadosSuficientes: temDadosSuficientes
-      };
-    }
-
-    // Função para exibir os resultados na tela
-    function exibirResultados(data) {
-      // Esconder o quiz
-      document.getElementById("quiz").classList.add("hidden");
-      
-      // Mostrar o container de resultados
-      const resultadoContainer = document.getElementById("resultado-container");
-      resultadoContainer.classList.remove("hidden");
-      
-      // Extrair informações da resposta
-      const { output, temDadosSuficientes } = extrairInformacoesResposta(data);
-      
-      // Verificar se temos dados válidos
-      if (!temDadosSuficientes) {
-        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
-        document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
-        
-        // Mostrar dados brutos em modo de debug
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(data);
-        }
-        return;
-      }
-      
-      // Extrair dados do resultado
-      const nome = output.userName || userName;
-      const perfilPredominante = output.perfilPredominante;
-      const resultadoOrdenado = output.resultadoOrdenado || [];
-      const percentuais = output.percentuais || {};
-      
-      // Exibir título com perfil predominante
-      document.getElementById("perfil-titulo").innerHTML = `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
-      
-      // Exibir detalhes dos perfis
-      let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
-      
-      // Adicionar cada perfil como um item formatado
-      resultadoOrdenado.forEach((perfil, index) => {
-        const posicao = index === 0 ? "Predominante" : 
-                       index === 1 ? "Segundo" : 
-                       index === 2 ? "Terceiro" : "Último";
-        
-        detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
-      });
-      
-      detalhesHTML += "<p>Obrigado por participar do teste!</p>";
-      document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
-      
-      // Adicionar evento ao botão de reiniciar
-      document.getElementById("restart-button").addEventListener("click", function() {
-        location.reload();
-      });
-      
-      // Tentar criar o gráfico se Chart.js estiver disponível
-      try {
-        const labels = Object.keys(percentuais);
-        const values = Object.values(percentuais);
-        
-        if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
-          const ctx = document.getElementById("graficoPerfil").getContext("2d");
-          new Chart(ctx, {
-            type: "pie",
-            data: {
-              labels: labels,
-              datasets: [{
-                data: values,
-                backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: "bottom" },
-                title: { 
-                  display: true, 
-                  text: "Distribuição de Perfil Comportamental",
-                  color: "#ffffff"
-                }
-              }
-            }
-          });
-        }
-      } catch (e) {
-        console.log("Erro ao criar gráfico:", e);
+        return resultado;
+      } catch (error) {
+        console.error("Erro ao processar resposta:", error);
+        return resultado;
       }
     }
 
     // Função para enviar resultados
     function enviarResultados() {
-      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      // Esconder quiz
+      document.getElementById("quiz").classList.add("hidden");
       
-      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userName, 
-          userAnswers: respostas, 
-          lastUserMessage: perguntasEnviadas  // Renomeado para corresponder ao que o backend espera
-        })
-      })
-      .then(res => res.text())  // Importante: usar text() em vez de json()
-      .then(rawData => {
-        console.log("Resposta do servidor (texto bruto):", rawData);
-        
-        // Chamar função para exibir resultados com o texto bruto
-        exibirResultados(rawData);
-      })
-      .catch(err => {
-        document.getElementById("quiz").classList.add("hidden");
-        document.getElementById("resultado-container").classList.remove("hidden");
-        document.getElementById("perfil-titulo").textContent = "Erro de conexão";
-        document.getElementById("perfil-detalhes").innerHTML = `
-          <p>Ocorreu um erro ao processar seu teste. Por favor, tente novamente.</p>
-          <div class="container" style="margin-top: 15px;">
-            <button id="retry-button">Tentar Novamente</button>
-          </div>
-        `;
-        
-        document.getElementById("retry-button").addEventListener("click", function() {
-          document.getElementById("resultado-container").classList.add("hidden");
-          document.getElementById("quiz").classList.remove("hidden");
-          enviarResultados();
-        });
-        
-        console.error("Erro:", err);
+      // Mostrar container de resultado
+      document.getElementById("resultado-container").classList.remove("hidden");
+      
+      // Preparar dados para envio
+      const dadosEnvio = {
+        userName: userName,
+        userEmail: userEmail, // Incluir e-mail nos dados de envio
+        respostas: respostas,
+        perguntasEnviadas: perguntasEnviadas
+      };
+      
+      // Simular resposta do servidor (em produção, isso seria uma chamada real à API)
+      const respostaSimulada = {
+        userName: userName,
+        userEmail: userEmail, // Incluir e-mail na resposta simulada
+        percentuais: {
+          "Águia": 30,
+          "Gato": 20,
+          "Lobo": 25,
+          "Tubarão": 25
+        },
+        perfilPredominante: "Águia"
+      };
+      
+      // Processar resposta
+      const resultado = extrairInformacoesResposta(respostaSimulada);
+      
+      // Mostrar resultado
+      mostrarResultado(resultado);
+    }
+
+    // Função para mostrar resultado
+    function mostrarResultado(resultado) {
+      // Definir título
+      document.getElementById("perfil-titulo").textContent = `${resultado.userName}, seu perfil predominante é: ${resultado.perfilPredominante}`;
+      
+      // Mostrar detalhes
+      let detalhesHTML = "<p>Seus resultados:</p>";
+      
+      resultado.resultadoOrdenado.forEach(item => {
+        const classeDestaque = item === resultado.resultadoOrdenado[0] ? "perfil-predominante" : "";
+        detalhesHTML += `<p class="perfil-item ${classeDestaque}">${item.perfil}: ${item.valor}%</p>`;
+      });
+      
+      document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
+      
+      // Criar gráfico
+      criarGrafico(resultado);
+      
+      // Adicionar evento ao botão de reiniciar
+      document.getElementById("restart-button").addEventListener("click", function() {
+        document.getElementById("resultado-container").classList.add("hidden");
+        document.getElementById("intro-container").classList.remove("hidden");
+        document.getElementById("name").value = userName;
+        document.getElementById("email").value = userEmail; // Manter o e-mail preenchido
+        respostas = {};
       });
     }
 
-    // Adicionar evento ao botão de início quando o DOM estiver carregado
+    // Função para criar gráfico
+    function criarGrafico(resultado) {
+      const canvas = document.getElementById("graficoPerfil");
+      const ctx = canvas.getContext("2d");
+      
+      // Limpar canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Configurações do gráfico
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = Math.min(centerX, centerY) - 10;
+      
+      // Cores para cada perfil
+      const cores = {
+        "Águia": "#FF5733",
+        "Gato": "#33FF57",
+        "Lobo": "#3357FF",
+        "Tubarão": "#F3FF33"
+      };
+      
+      // Desenhar gráfico de pizza
+      let startAngle = 0;
+      
+      resultado.resultadoOrdenado.forEach(item => {
+        const sliceAngle = (item.valor / 100) * 2 * Math.PI;
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        
+        ctx.fillStyle = cores[item.perfil];
+        ctx.fill();
+        
+        // Adicionar texto
+        const midAngle = startAngle + sliceAngle / 2;
+        const textX = centerX + Math.cos(midAngle) * (radius * 0.7);
+        const textY = centerY + Math.sin(midAngle) * (radius * 0.7);
+        
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`${item.perfil} ${item.valor}%`, textX, textY);
+        
+        startAngle += sliceAngle;
+      });
+    }
+
+    // Adicionar eventos quando a página carregar
     document.addEventListener("DOMContentLoaded", function() {
       document.getElementById("start-button").addEventListener("click", startTest);
-      
-      // Verificar se há parâmetro de debug na URL
-      if (window.location.search.includes('debug=true')) {
-        debugMode = true;
-        document.getElementById("debug-info").style.display = "block";
-        document.getElementById("debug-info").textContent = "Modo de debug ativado";
-      }
     });
   </script>
-  
-  <!-- Adicionar Chart.js para o gráfico -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
