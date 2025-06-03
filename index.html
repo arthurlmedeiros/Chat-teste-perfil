@@ -396,11 +396,11 @@
       // Ativar modo de debug para mostrar informações
       if (debugMode) {
         document.getElementById("debug-info").style.display = "block";
-        document.getElementById("debug-info").textContent = "Dados recebidos: " + JSON.stringify(rawData, null, 2);
+        document.getElementById("debug-info").textContent = "Dados recebidos: " + rawData;
       }
       
-      // Criar objeto de resultado
-      const resultado = {
+      // Criar objeto de resultado padrão (caso o parsing falhe)
+      const resultadoPadrao = {
         userName: userName,
         userEmail: userEmail,
         resultadoOrdenado: [],
@@ -414,85 +414,106 @@
       };
       
       try {
-        // Converter para string se não for
-        const dataStr = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+        // Limpar a string de caracteres de formatação e quebras de linha
+        const cleanedData = rawData.replace(/\\n/g, '').replace(/\\"/g, '"');
         
-        // Extrair apenas a primeira parte da resposta (antes de "response")
-        let mainPart = dataStr;
-        const responseIndex = dataStr.indexOf('"response"');
-        if (responseIndex > 0) {
-          mainPart = dataStr.substring(0, responseIndex);
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nDados limpos: " + cleanedData;
         }
         
-        // Limpar a string de caracteres de formatação
-        mainPart = mainPart.replace(/\\n/g, ' ').replace(/\\"/g, '"');
+        // Extrair apenas a primeira parte da resposta (antes de "response")
+        let mainPart = cleanedData;
+        const responseIndex = cleanedData.indexOf('"response"');
+        if (responseIndex > 0) {
+          mainPart = cleanedData.substring(0, responseIndex);
+        }
         
         // Extrair nome do usuário
         const userNameRegex = /"userName"\s*:\s*"([^"]+)"/;
         const userNameMatch = mainPart.match(userNameRegex);
+        let extractedUserName = userName;
         if (userNameMatch) {
-          resultado.userName = userNameMatch[1];
+          extractedUserName = userNameMatch[1];
         }
         
         // Extrair perfil predominante
         const perfilPredominanteRegex = /"perfilPredominante"\s*:\s*"([^"]+)"/;
         const perfilPredominanteMatch = mainPart.match(perfilPredominanteRegex);
+        let extractedPerfilPredominante = "";
         if (perfilPredominanteMatch) {
-          resultado.perfilPredominante = perfilPredominanteMatch[1];
+          extractedPerfilPredominante = perfilPredominanteMatch[1];
         }
         
-        // Extrair percentuais diretamente
-        const aguiaRegex = /"Águia"\s*:\s*(\d+)/;
-        const gatoRegex = /"Gato"\s*:\s*(\d+)/;
-        const loboRegex = /"Lobo"\s*:\s*(\d+)/;
-        const tubaraoRegex = /"Tubarão"\s*:\s*(\d+)/;
-        
-        const aguiaMatch = mainPart.match(aguiaRegex);
-        const gatoMatch = mainPart.match(gatoRegex);
-        const loboMatch = mainPart.match(loboRegex);
-        const tubaraoMatch = mainPart.match(tubaraoRegex);
-        
-        if (aguiaMatch) resultado.percentuais["Águia"] = parseInt(aguiaMatch[1]);
-        if (gatoMatch) resultado.percentuais["Gato"] = parseInt(gatoMatch[1]);
-        if (loboMatch) resultado.percentuais["Lobo"] = parseInt(loboMatch[1]);
-        if (tubaraoMatch) resultado.percentuais["Tubarão"] = parseInt(tubaraoMatch[1]);
-        
-        // Construir resultadoOrdenado manualmente a partir dos percentuais
-        const percentuaisArray = Object.entries(resultado.percentuais)
-          .map(([nome, valor]) => ({ nome, valor }))
-          .sort((a, b) => b.valor - a.valor);
-        
-        resultado.resultadoOrdenado = percentuaisArray.map(item => `${item.nome} (${item.valor}%)`);
-        
-        // Se não temos perfil predominante, usar o primeiro do array ordenado
-        if (!resultado.perfilPredominante && percentuaisArray.length > 0) {
-          resultado.perfilPredominante = percentuaisArray[0].nome;
+        // Extrair resultadoOrdenado (que agora vem como string)
+        const resultadoOrdenadoRegex = /"resultadoOrdenado"\s*:\s*"([^"]+)"/;
+        const resultadoOrdenadoMatch = mainPart.match(resultadoOrdenadoRegex);
+        let extractedResultadoOrdenado = [];
+        if (resultadoOrdenadoMatch) {
+          // Converter a string separada por vírgulas em um array
+          extractedResultadoOrdenado = resultadoOrdenadoMatch[1].split(',');
         }
+        
+        // Criar percentuais manualmente a partir do resultadoOrdenado
+        const extractedPercentuais = {
+          "Águia": 0,
+          "Gato": 0,
+          "Lobo": 0,
+          "Tubarão": 0
+        };
+        
+        // Processar cada item do resultadoOrdenado para extrair percentuais
+        extractedResultadoOrdenado.forEach(item => {
+          // Formato esperado: "Perfil (XX%)"
+          const perfilMatch = item.match(/([^\(]+)\s*\((\d+)%\)/);
+          if (perfilMatch) {
+            const perfil = perfilMatch[1].trim();
+            const percentual = parseInt(perfilMatch[2], 10);
+            if (extractedPercentuais.hasOwnProperty(perfil)) {
+              extractedPercentuais[perfil] = percentual;
+            }
+          }
+        });
         
         if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + JSON.stringify(resultado, null, 2);
+          document.getElementById("debug-info").textContent += "\n\nDados extraídos:";
+          document.getElementById("debug-info").textContent += "\n- Nome: " + extractedUserName;
+          document.getElementById("debug-info").textContent += "\n- Perfil Predominante: " + extractedPerfilPredominante;
+          document.getElementById("debug-info").textContent += "\n- Resultado Ordenado: " + JSON.stringify(extractedResultadoOrdenado);
+          document.getElementById("debug-info").textContent += "\n- Percentuais: " + JSON.stringify(extractedPercentuais);
         }
+        
+        // Verificar se temos dados suficientes
+        const temDadosSuficientes = 
+          extractedPerfilPredominante && 
+          extractedResultadoOrdenado.length > 0 && 
+          Object.values(extractedPercentuais).some(v => v > 0);
+        
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nDados suficientes: " + temDadosSuficientes;
+        }
+        
+        return {
+          output: {
+            userName: extractedUserName,
+            resultadoOrdenado: extractedResultadoOrdenado,
+            percentuais: extractedPercentuais,
+            perfilPredominante: extractedPerfilPredominante
+          },
+          temDadosSuficientes: temDadosSuficientes
+        };
       } catch (e) {
         console.error("Erro ao extrair informações:", e);
         if (debugMode) {
           document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
+          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + rawData;
         }
+        
+        // Retornar resultado padrão com flag de dados insuficientes
+        return {
+          output: resultadoPadrao,
+          temDadosSuficientes: false
+        };
       }
-      
-      // Verificar se temos dados suficientes
-      const temDadosSuficientes = 
-        resultado.perfilPredominante && 
-        resultado.resultadoOrdenado.length > 0 && 
-        Object.values(resultado.percentuais).some(v => v > 0);
-      
-      if (debugMode) {
-        document.getElementById("debug-info").textContent += "\n\nDados suficientes: " + temDadosSuficientes;
-      }
-      
-      return {
-        output: resultado,
-        temDadosSuficientes: temDadosSuficientes
-      };
     }
 
     // Função para exibir os resultados na tela
