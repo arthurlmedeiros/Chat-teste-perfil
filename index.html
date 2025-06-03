@@ -381,8 +381,8 @@
       mostrarPergunta(perguntaAtual);
     }
 
-    // Função para extrair informações específicas da resposta
-    function extrairInformacoesEspecificas(data) {
+    // Função para extrair informações da resposta
+    function extrairInformacoesResposta(data) {
       // Ativar modo de debug para mostrar informações
       if (debugMode) {
         document.getElementById("debug-info").style.display = "block";
@@ -391,32 +391,27 @@
       
       // Criar objeto de resultado
       const resultado = {
-        userName: "",
+        userName: userName,
         resultadoOrdenado: [],
-        percentuais: {},
+        percentuais: {
+          "Águia": 0,
+          "Gato": 0,
+          "Lobo": 0,
+          "Tubarão": 0
+        },
         perfilPredominante: ""
       };
       
       try {
-        // Procurar por propriedade 'response' que contém a string JSON
-        if (data && data.response && typeof data.response === 'string') {
-          // Extrair o JSON da string de resposta
-          const jsonString = data.response;
+        // Converter para string se não for
+        const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
+        
+        // Tentar extrair diretamente da resposta como string
+        if (dataStr) {
+          // Extrair resultadoOrdenado
+          const resultadosRegex = /"resultadoOrdenado"\s*:\s*\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/;
+          const resultadosMatch = dataStr.match(resultadosRegex);
           
-          // Extrair nome do usuário
-          const userNameMatch = jsonString.match(/"userName"\s*:\s*"([^"]+)"/);
-          if (userNameMatch && userNameMatch[1]) {
-            resultado.userName = userNameMatch[1];
-          }
-          
-          // Extrair perfil predominante
-          const perfilMatch = jsonString.match(/"perfilPredominante"\s*:\s*"([^"]+)"/);
-          if (perfilMatch && perfilMatch[1]) {
-            resultado.perfilPredominante = perfilMatch[1];
-          }
-          
-          // Extrair resultados ordenados
-          const resultadosMatch = jsonString.match(/"resultadoOrdenado"\s*:\s*\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/);
           if (resultadosMatch) {
             resultado.resultadoOrdenado = [
               resultadosMatch[1],
@@ -424,18 +419,66 @@
               resultadosMatch[3],
               resultadosMatch[4]
             ];
+            
+            // Extrair perfil predominante do primeiro resultado
+            const perfilMatch = resultado.resultadoOrdenado[0].match(/^([^\s(]+)/);
+            if (perfilMatch) {
+              resultado.perfilPredominante = perfilMatch[1];
+            }
           }
           
           // Extrair percentuais
-          const aguiaMatch = jsonString.match(/"Águia"\s*:\s*(\d+)/);
-          const gatoMatch = jsonString.match(/"Gato"\s*:\s*(\d+)/);
-          const loboMatch = jsonString.match(/"Lobo"\s*:\s*(\d+)/);
-          const tubaraoMatch = jsonString.match(/"Tubarão"\s*:\s*(\d+)/);
+          const percentuaisRegex = /"percentuais"\s*:\s*{\s*"Águia"\s*:\s*(\d+)\s*,\s*"Gato"\s*:\s*(\d+)\s*,\s*"Lobo"\s*:\s*(\d+)\s*,\s*"Tubarão"\s*:\s*(\d+)\s*}/;
+          const percentuaisMatch = dataStr.match(percentuaisRegex);
           
-          if (aguiaMatch) resultado.percentuais["Águia"] = parseInt(aguiaMatch[1]);
-          if (gatoMatch) resultado.percentuais["Gato"] = parseInt(gatoMatch[1]);
-          if (loboMatch) resultado.percentuais["Lobo"] = parseInt(loboMatch[1]);
-          if (tubaraoMatch) resultado.percentuais["Tubarão"] = parseInt(tubaraoMatch[1]);
+          if (percentuaisMatch) {
+            resultado.percentuais["Águia"] = parseInt(percentuaisMatch[1]);
+            resultado.percentuais["Gato"] = parseInt(percentuaisMatch[2]);
+            resultado.percentuais["Lobo"] = parseInt(percentuaisMatch[3]);
+            resultado.percentuais["Tubarão"] = parseInt(percentuaisMatch[4]);
+          }
+          
+          // Extrair nome do usuário
+          const userNameRegex = /"userName"\s*:\s*"([^"]+)"/;
+          const userNameMatch = dataStr.match(userNameRegex);
+          
+          if (userNameMatch) {
+            resultado.userName = userNameMatch[1];
+          }
+          
+          // Extrair perfil predominante diretamente
+          if (!resultado.perfilPredominante) {
+            const perfilPredominanteRegex = /"perfilPredominante"\s*:\s*"([^"]+)"/;
+            const perfilPredominanteMatch = dataStr.match(perfilPredominanteRegex);
+            
+            if (perfilPredominanteMatch) {
+              resultado.perfilPredominante = perfilPredominanteMatch[1];
+            }
+          }
+        }
+        
+        // Tentar extrair da propriedade response se existir
+        if (data && data.response && typeof data.response === 'string') {
+          const responseStr = data.response;
+          
+          // Extrair resultadoOrdenado
+          const resultadosRegex = /"resultadoOrdenado"\s*:\s*\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/;
+          const resultadosMatch = responseStr.match(resultadosRegex);
+          
+          if (resultadosMatch && !resultado.resultadoOrdenado.length) {
+            resultado.resultadoOrdenado = [
+              resultadosMatch[1],
+              resultadosMatch[2],
+              resultadosMatch[3],
+              resultadosMatch[4]
+            ];
+            
+            // Extrair perfil predominante do primeiro resultado
+            const perfilMatch = resultado.resultadoOrdenado[0].match(/^([^\s(]+)/);
+            if (perfilMatch) {
+              resultado.perfilPredominante = perfilMatch[1];
+            }
+          }
         }
       } catch (e) {
         console.error("Erro ao extrair informações:", e);
@@ -444,14 +487,10 @@
         }
       }
       
-      // Usar valores padrão se não conseguir extrair
-      resultado.userName = resultado.userName || userName;
-      
       // Verificar se temos dados suficientes
       const temDadosSuficientes = 
-        resultado.perfilPredominante && 
         resultado.resultadoOrdenado.length > 0 && 
-        Object.keys(resultado.percentuais).length > 0;
+        resultado.perfilPredominante;
       
       if (debugMode) {
         document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + JSON.stringify(resultado, null, 2);
@@ -473,13 +512,18 @@
       const resultadoContainer = document.getElementById("resultado-container");
       resultadoContainer.classList.remove("hidden");
       
-      // Extrair informações específicas da resposta
-      const { output, temDadosSuficientes } = extrairInformacoesEspecificas(data);
+      // Extrair informações da resposta
+      const { output, temDadosSuficientes } = extrairInformacoesResposta(data);
       
       // Verificar se temos dados válidos
       if (!temDadosSuficientes) {
         document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
         document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
+        
+        // Mostrar dados brutos em modo de debug
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(data);
+        }
         return;
       }
       
@@ -559,9 +603,20 @@
           lastUserMessage: perguntasEnviadas  // Renomeado para corresponder ao que o backend espera
         })
       })
-      .then(res => res.json())
-      .then(data => {
-        console.log("Resposta do servidor:", data);
+      .then(res => res.text())  // Importante: usar text() em vez de json()
+      .then(rawData => {
+        console.log("Resposta do servidor (texto bruto):", rawData);
+        
+        // Tentar converter para JSON, mas manter como string se falhar
+        let data;
+        try {
+          data = JSON.parse(rawData);
+          console.log("Resposta do servidor (JSON):", data);
+        } catch (e) {
+          console.log("Não foi possível converter para JSON, usando texto bruto");
+          data = rawData;
+        }
+        
         // Chamar função para exibir resultados
         exibirResultados(data);
       })
@@ -593,6 +648,8 @@
       // Verificar se há parâmetro de debug na URL
       if (window.location.search.includes('debug=true')) {
         debugMode = true;
+        document.getElementById("debug-info").style.display = "block";
+        document.getElementById("debug-info").textContent = "Modo de debug ativado";
       }
     });
   </script>
