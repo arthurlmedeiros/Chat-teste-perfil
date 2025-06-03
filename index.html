@@ -105,186 +105,231 @@
   </div>
   
   <script>
-    // Array completo com as 20 perguntas originais
+    // Array completo com as 25 perguntas novas
     const perguntasBase = [
       {
-        texto: "Como você prefere trabalhar em equipe?",
+        texto: "Eu sou...",
         opcoes: [
-          { texto: "Liderando e tomando decisões", perfil: "dominante" },
-          { texto: "Analisando dados e informações", perfil: "analitico" },
-          { texto: "Mantendo harmonia e cooperação", perfil: "estavel" },
-          { texto: "Motivando e inspirando os outros", perfil: "influente" }
+          { texto: "Idealista, criativo e visionário", perfil: "idealista" },
+          { texto: "Focado, determinado e persistente", perfil: "focado" },
+          { texto: "Divertido, espiritual e benéfico", perfil: "afetivo" },
+          { texto: "Confiável, meticuloso e previsível", perfil: "organizado" }
         ]
       },
       {
-        texto: "Como você lida com desafios?",
+        texto: "Eu gosto de...",
         opcoes: [
-          { texto: "Enfrento-os diretamente", perfil: "dominante" },
-          { texto: "Analiso todas as possibilidades", perfil: "analitico" },
-          { texto: "Busco consenso e apoio", perfil: "estavel" },
-          { texto: "Transformo-os em oportunidades", perfil: "influente" }
+          { texto: "Ser piloto", perfil: "focado" },
+          { texto: "Conversar com os passageiros", perfil: "afetivo" },
+          { texto: "Planejar a viagem", perfil: "organizado" },
+          { texto: "Explorar novas rotas", perfil: "idealista" }
         ]
       },
       {
-        texto: "O que mais te motiva no trabalho?",
+        texto: "Se você quiser se dar bem comigo...",
         opcoes: [
-          { texto: "Resultados e conquistas", perfil: "dominante" },
-          { texto: "Precisão e qualidade", perfil: "analitico" },
-          { texto: "Estabilidade e previsibilidade", perfil: "estavel" },
-          { texto: "Reconhecimento e interação social", perfil: "influente" }
+          { texto: "Me dê liberdade", perfil: "idealista" },
+          { texto: "Me deixe saber sua expectativa", perfil: "organizado" },
+          { texto: "Lidere, siga ou saia do caminho", perfil: "focado" },
+          { texto: "Seja amigável, carinhoso e compreensivo", perfil: "afetivo" }
         ]
       },
       {
-        texto: "Como você toma decisões importantes?",
+        texto: "Para conseguir obter bons resultados é preciso...",
         opcoes: [
-          { texto: "Rapidamente, baseado em objetivos", perfil: "dominante" },
-          { texto: "Após análise detalhada dos fatos", perfil: "analitico" },
-          { texto: "Considerando o impacto nas pessoas", perfil: "estavel" },
-          { texto: "Seguindo intuição e sentimentos", perfil: "influente" }
+          { texto: "Ter incertezas", perfil: "idealista" },
+          { texto: "Controlar o essencial", perfil: "organizado" },
+          { texto: "Diversão e celebração", perfil: "afetivo" },
+          { texto: "Planejar e obter recursos", perfil: "focado" }
         ]
       },
       {
-        texto: "Como você reage a mudanças?",
+        texto: "Eu me divirto quando...",
         opcoes: [
-          { texto: "Vejo como oportunidade para avançar", perfil: "dominante" },
-          { texto: "Avalio cuidadosamente os prós e contras", perfil: "analitico" },
-          { texto: "Prefiro adaptação gradual e planejada", perfil: "estavel" },
-          { texto: "Abraço com entusiasmo novas possibilidades", perfil: "influente" }
+          { texto: "Estou me exercitando", perfil: "focado" },
+          { texto: "Tenho novidades", perfil: "idealista" },
+          { texto: "Estou com outros", perfil: "afetivo" },
+          { texto: "Determino as regras", perfil: "organizado" }
         ]
       },
       {
-        texto: "Como você prefere se comunicar?",
+        texto: "Eu penso que...",
         opcoes: [
-          { texto: "Direto e objetivo, indo ao ponto", perfil: "dominante" },
-          { texto: "Detalhado e preciso, com fatos", perfil: "analitico" },
-          { texto: "Diplomático e atencioso", perfil: "estavel" },
-          { texto: "Expressivo e animado", perfil: "influente" }
+          { texto: "Unidos venceremos, dividos perderemos", perfil: "afetivo" },
+          { texto: "O ataque é melhor que a defesa", perfil: "focado" },
+          { texto: "É bom ser manso, mas andar com um porrete", perfil: "idealista" },
+          { texto: "Um homem prevenido vale por dois", perfil: "organizado" }
         ]
       },
       {
-        texto: "O que mais te incomoda?",
+        texto: "Minha preocupação é...",
         opcoes: [
-          { texto: "Perder tempo ou controle", perfil: "dominante" },
-          { texto: "Imprecisão ou falta de detalhes", perfil: "analitico" },
-          { texto: "Conflitos e instabilidade", perfil: "estavel" },
-          { texto: "Rotina e falta de interação", perfil: "influente" }
+          { texto: "Gerar a idéia global", perfil: "idealista" },
+          { texto: "Fazer com quem as pessoas gostem", perfil: "afetivo" },
+          { texto: "Fazer com que funcione", perfil: "organizado" },
+          { texto: "Fazer com que aconteça", perfil: "focado" }
         ]
       },
       {
-        texto: "Como você lida com conflitos?",
+        texto: "Eu prefiro...",
         opcoes: [
-          { texto: "Enfrento diretamente para resolver logo", perfil: "dominante" },
-          { texto: "Analiso as causas e busco soluções lógicas", perfil: "analitico" },
-          { texto: "Busco compromisso e harmonia", perfil: "estavel" },
-          { texto: "Uso humor e carisma para aliviar tensões", perfil: "influente" }
+          { texto: "Perguntas a respostas", perfil: "idealista" },
+          { texto: "Ter todos os detalhes", perfil: "organizado" },
+          { texto: "Vantagens a meu favor", perfil: "focado" },
+          { texto: "Que todos tenham a chance de ser ouvido", perfil: "afetivo" }
         ]
       },
       {
-        texto: "Como você organiza seu trabalho?",
+        texto: "Eu gosto de...",
         opcoes: [
-          { texto: "Foco em resultados e prazos", perfil: "dominante" },
-          { texto: "Sigo processos e sistemas organizados", perfil: "analitico" },
-          { texto: "Mantenho rotinas estáveis e previsíveis", perfil: "estavel" },
-          { texto: "Adapto conforme necessário, com flexibilidade", perfil: "influente" }
+          { texto: "Fazer progresso", perfil: "focado" },
+          { texto: "Construir memórias", perfil: "afetivo" },
+          { texto: "Fazer sentido", perfil: "organizado" },
+          { texto: "Tornar as pessoas confortáveis", perfil: "idealista" }
         ]
       },
       {
-        texto: "O que você valoriza em um ambiente de trabalho?",
+        texto: "Eu gosto de chegar...",
         opcoes: [
-          { texto: "Autonomia e oportunidades de liderança", perfil: "dominante" },
-          { texto: "Ordem, clareza e precisão", perfil: "analitico" },
-          { texto: "Segurança e ambiente harmonioso", perfil: "estavel" },
-          { texto: "Criatividade e interação social", perfil: "influente" }
+          { texto: "Na frente", perfil: "focado" },
+          { texto: "Junto", perfil: "afetivo" },
+          { texto: "Na hora", perfil: "organizado" },
+          { texto: "Em outro lugar", perfil: "idealista" }
         ]
       },
       {
-        texto: "Como você reage sob pressão?",
+        texto: "Um ótimo dia para mim é quando...",
         opcoes: [
-          { texto: "Mantenho foco e tomo decisões rápidas", perfil: "dominante" },
-          { texto: "Analiso a situação metodicamente", perfil: "analitico" },
-          { texto: "Mantenho a calma e busco apoio", perfil: "estavel" },
-          { texto: "Uso otimismo e adaptabilidade", perfil: "influente" }
+          { texto: "Consigo fazer muitas coisas", perfil: "focado" },
+          { texto: "Me divirto com meus amigos", perfil: "afetivo" },
+          { texto: "Tudo segue conforme planejado", perfil: "organizado" },
+          { texto: "Desfruto de coisas novas e estimulantes", perfil: "idealista" }
         ]
       },
       {
-        texto: "O que você busca em um projeto?",
+        texto: "Eu vejo a morte como...",
         opcoes: [
-          { texto: "Desafios e resultados concretos", perfil: "dominante" },
-          { texto: "Clareza e processos bem definidos", perfil: "analitico" },
-          { texto: "Estabilidade e cooperação em equipe", perfil: "estavel" },
-          { texto: "Inovação e oportunidades criativas", perfil: "influente" }
+          { texto: "Uma grande aventura misteriosa", perfil: "idealista" },
+          { texto: "Oportunidade para rever os falecidos", perfil: "afetivo" },
+          { texto: "Um modo de receber recompensas", perfil: "organizado" },
+          { texto: "Algo que sempre chega muito cedo", perfil: "focado" }
         ]
       },
       {
-        texto: "Como você prefere receber feedback?",
+        texto: "Minha filosofia de vida é...",
         opcoes: [
-          { texto: "Direto e focado em resultados", perfil: "dominante" },
-          { texto: "Detalhado e baseado em fatos", perfil: "analitico" },
-          { texto: "Construtivo e com suporte", perfil: "estavel" },
-          { texto: "Positivo e entusiástico", perfil: "influente" }
+          { texto: "Há ganhadores e perdedores, e eu acredito ser um ganhador", perfil: "focado" },
+          { texto: "Para eu ganhar, ninguém precisa perder", perfil: "afetivo" },
+          { texto: "Para ganhar é preciso seguir as regras", perfil: "organizado" },
+          { texto: "Para ganhar, é necessário inventar novas regras", perfil: "idealista" }
         ]
       },
       {
-        texto: "O que te dá mais satisfação no trabalho?",
+        texto: "Eu sempre gostei de...",
         opcoes: [
-          { texto: "Superar desafios e atingir metas", perfil: "dominante" },
-          { texto: "Resolver problemas complexos", perfil: "analitico" },
-          { texto: "Contribuir para o bem-estar da equipe", perfil: "estavel" },
-          { texto: "Inspirar e motivar pessoas", perfil: "influente" }
+          { texto: "Explorar", perfil: "idealista" },
+          { texto: "Evitar surpresas", perfil: "organizado" },
+          { texto: "Focalizar a meta", perfil: "focado" },
+          { texto: "Realizar uma abordagem natural", perfil: "afetivo" }
         ]
       },
       {
-        texto: "Como você lida com prazos?",
+        texto: "Eu gosto de mudanças se...",
         opcoes: [
-          { texto: "Estabeleço metas claras e cumpro antes", perfil: "dominante" },
-          { texto: "Planejo detalhadamente cada etapa", perfil: "analitico" },
-          { texto: "Mantenho ritmo constante e previsível", perfil: "estavel" },
-          { texto: "Trabalho intensamente próximo ao prazo", perfil: "influente" }
+          { texto: "Me der uma vantagem competitiva", perfil: "focado" },
+          { texto: "For divertido e puder ser compartilhado", perfil: "afetivo" },
+          { texto: "Me der mais liberdade e variedade", perfil: "idealista" },
+          { texto: "Melhorar ou me der mais controle", perfil: "organizado" }
         ]
       },
       {
-        texto: "Como você prefere aprender?",
+        texto: "Não existe nada de errado em...",
         opcoes: [
-          { texto: "Na prática, com desafios reais", perfil: "dominante" },
-          { texto: "Estudando detalhadamente o assunto", perfil: "analitico" },
-          { texto: "Passo a passo, com orientação", perfil: "estavel" },
-          { texto: "Em grupo, com interação e discussão", perfil: "influente" }
+          { texto: "Se colocar na frente", perfil: "focado" },
+          { texto: "Colocar os outros na frente", perfil: "afetivo" },
+          { texto: "Mudar de idéia", perfil: "idealista" },
+          { texto: "Ser consistente", perfil: "organizado" }
         ]
       },
       {
-        texto: "O que você prioriza em um projeto?",
+        texto: "Eu gosto de buscar conselhos de...",
         opcoes: [
-          { texto: "Resultados e eficiência", perfil: "dominante" },
-          { texto: "Qualidade e precisão", perfil: "analitico" },
-          { texto: "Cooperação e harmonia", perfil: "estavel" },
-          { texto: "Criatividade e inovação", perfil: "influente" }
+          { texto: "Pessoas bem sucedidas", perfil: "focado" },
+          { texto: "Anciões e conselheiros", perfil: "afetivo" },
+          { texto: "Autoridades no assunto", perfil: "organizado" },
+          { texto: "Lugares, os mais estranhos", perfil: "idealista" }
         ]
       },
       {
-        texto: "Como você contribui em reuniões?",
+        texto: "Meu lema é...",
         opcoes: [
-          { texto: "Direcionando e mantendo o foco", perfil: "dominante" },
-          { texto: "Analisando dados e questionando detalhes", perfil: "analitico" },
-          { texto: "Ouvindo atentamente e mediando", perfil: "estavel" },
-          { texto: "Gerando ideias e entusiasmando o grupo", perfil: "influente" }
+          { texto: "Fazer o que precisa ser feito", perfil: "idealista" },
+          { texto: "Fazer bem feito", perfil: "organizado" },
+          { texto: "Fazer junto com o grupo", perfil: "afetivo" },
+          { texto: "Simplesmente fazer", perfil: "focado" }
         ]
       },
       {
-        texto: "Como você reage a obstáculos?",
+        texto: "Eu gosto de...",
         opcoes: [
-          { texto: "Enfrento-os diretamente e persisto", perfil: "dominante" },
-          { texto: "Analiso alternativas e busco soluções", perfil: "analitico" },
-          { texto: "Adapto-me pacientemente à situação", perfil: "estavel" },
-          { texto: "Busco apoio e novas abordagens", perfil: "influente" }
+          { texto: "Complexidade, mesmo se confuso", perfil: "idealista" },
+          { texto: "Ordem e sistematização", perfil: "organizado" },
+          { texto: "Calor humano e animação", perfil: "afetivo" },
+          { texto: "Coisas claras e simples", perfil: "focado" }
         ]
       },
       {
-        texto: "O que você considera ao tomar decisões?",
+        texto: "Tempo para mim é...",
         opcoes: [
-          { texto: "Resultados e eficiência", perfil: "dominante" },
-          { texto: "Lógica e análise de dados", perfil: "analitico" },
-          { texto: "Impacto nas pessoas e harmonia", perfil: "estavel" },
-          { texto: "Intuição e possibilidades futuras", perfil: "influente" }
+          { texto: "Algo que detesto disperdiçar", perfil: "focado" },
+          { texto: "Um grande ciclo", perfil: "afetivo" },
+          { texto: "Uma flecha que leva ao inevitável", perfil: "organizado" },
+          { texto: "Irrelevante", perfil: "idealista" }
+        ]
+      },
+      {
+        texto: "Se eu fosse bilionário...",
+        opcoes: [
+          { texto: "Faria doações para muitas entidades", perfil: "afetivo" },
+          { texto: "Criaria uma poupança avantajada", perfil: "organizado" },
+          { texto: "Faria o que desse na cabeça", perfil: "idealista" },
+          { texto: "Exibiria bastante com algumas pessoas", perfil: "focado" }
+        ]
+      },
+      {
+        texto: "Eu acredito que...",
+        opcoes: [
+          { texto: "O destino é mais importante que a jornada", perfil: "focado" },
+          { texto: "A jornada é mais importante que o destino", perfil: "afetivo" },
+          { texto: "Um centavo economizado é um centavo ganho", perfil: "organizado" },
+          { texto: "Bastam um navio e uma estrela para navegar", perfil: "idealista" }
+        ]
+      },
+      {
+        texto: "Eu acredito também que...",
+        opcoes: [
+          { texto: "Aquele que hesita está perdido", perfil: "focado" },
+          { texto: "De grão em grão a galinha enche o papo", perfil: "organizado" },
+          { texto: "O que vai, volta", perfil: "afetivo" },
+          { texto: "Um sorriso ou uma careta é o mesmo para quem e cego", perfil: "idealista" }
+        ]
+      },
+      {
+        texto: "Eu acredito ainda que...",
+        opcoes: [
+          { texto: "É melhor prudência do que arrependimento", perfil: "organizado" },
+          { texto: "A autoridade deve ser desafiada", perfil: "idealista" },
+          { texto: "Ganhar é fundamental", perfil: "focado" },
+          { texto: "O coletivo é mais importante do que o individual", perfil: "afetivo" }
+        ]
+      },
+      {
+        texto: "Eu penso que...",
+        opcoes: [
+          { texto: "Não é fácil ficar encurralado", perfil: "idealista" },
+          { texto: "É preferível olhar, antes de pular", perfil: "organizado" },
+          { texto: "Duas cabeças pensam melhor do que uma", perfil: "afetivo" },
+          { texto: "Se você não tem condições de competir, não compita", perfil: "focado" }
         ]
       }
     ];
@@ -445,220 +490,298 @@
         }
         
         // Extrair resultadoOrdenado (que agora vem como string)
-        const resultadoOrdenadoRegex = /"resultadoOrdenado"\s*:\s*"([^"]+)"/;
+        const resultadoOrdenadoRegex = /"resultadoOrdenado"\s*:\s*\[(.*?)\]/;
         const resultadoOrdenadoMatch = mainPart.match(resultadoOrdenadoRegex);
         let extractedResultadoOrdenado = [];
         if (resultadoOrdenadoMatch) {
-          // Converter a string separada por vírgulas em um array
-          extractedResultadoOrdenado = resultadoOrdenadoMatch[1].split(',');
+          const resultadoStr = resultadoOrdenadoMatch[1];
+          extractedResultadoOrdenado = resultadoStr
+            .split(',')
+            .map(item => item.trim().replace(/"/g, ''));
         }
         
-        // Criar percentuais manualmente a partir do resultadoOrdenado
-        const extractedPercentuais = {
-          "Águia": 0,
-          "Gato": 0,
-          "Lobo": 0,
-          "Tubarão": 0
-        };
-        
-        // Processar cada item do resultadoOrdenado para extrair percentuais
-        extractedResultadoOrdenado.forEach(item => {
-          // Formato esperado: "Perfil (XX%)"
-          const perfilMatch = item.match(/([^\(]+)\s*\((\d+)%\)/);
-          if (perfilMatch) {
-            const perfil = perfilMatch[1].trim();
-            const percentual = parseInt(perfilMatch[2], 10);
-            if (extractedPercentuais.hasOwnProperty(perfil)) {
-              extractedPercentuais[perfil] = percentual;
-            }
-          }
-        });
-        
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados extraídos:";
-          document.getElementById("debug-info").textContent += "\n- Nome: " + extractedUserName;
-          document.getElementById("debug-info").textContent += "\n- Perfil Predominante: " + extractedPerfilPredominante;
-          document.getElementById("debug-info").textContent += "\n- Resultado Ordenado: " + JSON.stringify(extractedResultadoOrdenado);
-          document.getElementById("debug-info").textContent += "\n- Percentuais: " + JSON.stringify(extractedPercentuais);
-        }
-        
-        // Verificar se temos dados suficientes
-        const temDadosSuficientes = 
-          extractedPerfilPredominante && 
-          extractedResultadoOrdenado.length > 0 && 
-          Object.values(extractedPercentuais).some(v => v > 0);
-        
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados suficientes: " + temDadosSuficientes;
-        }
-        
-        return {
-          output: {
-            userName: extractedUserName,
-            resultadoOrdenado: extractedResultadoOrdenado,
-            percentuais: extractedPercentuais,
-            perfilPredominante: extractedPerfilPredominante
-          },
-          temDadosSuficientes: temDadosSuficientes
-        };
-      } catch (e) {
-        console.error("Erro ao extrair informações:", e);
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
-          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + rawData;
-        }
-        
-        // Retornar resultado padrão com flag de dados insuficientes
-        return {
-          output: resultadoPadrao,
-          temDadosSuficientes: false
-        };
-      }
-    }
-
-    // Função para exibir os resultados na tela
-    function exibirResultados(data) {
-      // Esconder o quiz
-      document.getElementById("quiz").classList.add("hidden");
-      
-      // Mostrar o container de resultados
-      const resultadoContainer = document.getElementById("resultado-container");
-      resultadoContainer.classList.remove("hidden");
-      
-      // Extrair informações da resposta
-      const { output, temDadosSuficientes } = extrairInformacoesResposta(data);
-      
-      // Verificar se temos dados válidos
-      if (!temDadosSuficientes) {
-        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
-        document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
-        
-        // Mostrar dados brutos em modo de debug
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(data);
-        }
-        return;
-      }
-      
-      // Extrair dados do resultado
-      const nome = output.userName || userName;
-      const perfilPredominante = output.perfilPredominante;
-      const resultadoOrdenado = output.resultadoOrdenado || [];
-      const percentuais = output.percentuais || {};
-      
-      // Exibir título com perfil predominante
-      document.getElementById("perfil-titulo").innerHTML = `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
-      
-      // Exibir detalhes dos perfis
-      let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
-      
-      // Adicionar cada perfil como um item formatado
-      resultadoOrdenado.forEach((perfil, index) => {
-        const posicao = index === 0 ? "Predominante" : 
-                       index === 1 ? "Segundo" : 
-                       index === 2 ? "Terceiro" : "Último";
-        
-        detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
-      });
-      
-      detalhesHTML += "<p>Obrigado por participar do teste!</p>";
-      document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
-      
-      // Adicionar evento ao botão de reiniciar
-      document.getElementById("restart-button").addEventListener("click", function() {
-        location.reload();
-      });
-      
-      // Tentar criar o gráfico se Chart.js estiver disponível
-      try {
-        const labels = Object.keys(percentuais);
-        const values = Object.values(percentuais);
-        
-        if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
-          const ctx = document.getElementById("graficoPerfil").getContext("2d");
-          new Chart(ctx, {
-            type: "pie",
-            data: {
-              labels: labels,
-              datasets: [{
-                data: values,
-                backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"]
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: "bottom" },
-                title: { 
-                  display: true, 
-                  text: "Distribuição de Perfil Comportamental",
-                  color: "#ffffff"
-                }
-              }
+        // Extrair percentuais
+        const percentuaisRegex = /"percentuais"\s*:\s*\{(.*?)\}/;
+        const percentuaisMatch = mainPart.match(percentuaisRegex);
+        let extractedPercentuais = {};
+        if (percentuaisMatch) {
+          const percentuaisStr = percentuaisMatch[1];
+          const percentuaisPairs = percentuaisStr.split(',');
+          percentuaisPairs.forEach(pair => {
+            const [key, value] = pair.split(':').map(item => item.trim().replace(/"/g, ''));
+            if (key && value) {
+              extractedPercentuais[key] = parseInt(value, 10);
             }
           });
         }
-      } catch (e) {
-        console.log("Erro ao criar gráfico:", e);
+        
+        // Construir objeto de resultado
+        return {
+          userName: extractedUserName,
+          resultadoOrdenado: extractedResultadoOrdenado,
+          percentuais: extractedPercentuais,
+          perfilPredominante: extractedPerfilPredominante
+        };
+      } catch (error) {
+        console.error("Erro ao processar resposta:", error);
+        return resultadoPadrao;
       }
     }
 
     // Função para enviar resultados
     function enviarResultados() {
-      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      // Esconder quiz
+      document.getElementById("quiz").classList.add("hidden");
       
-      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userName, 
-          userAnswers: respostas, 
-          lastUserMessage: perguntasEnviadas,  // Renomeado para corresponder ao que o backend espera
-          userEmail  // Movido para ser o último campo
-        })
-      })
-      .then(res => res.text())  // Importante: usar text() em vez de json()
-      .then(rawData => {
-        console.log("Resposta do servidor (texto bruto):", rawData);
-        
-        // Chamar função para exibir resultados com o texto bruto
-        exibirResultados(rawData);
-      })
-      .catch(err => {
-        document.getElementById("quiz").classList.add("hidden");
-        document.getElementById("resultado-container").classList.remove("hidden");
-        document.getElementById("perfil-titulo").textContent = "Erro de conexão";
-        document.getElementById("perfil-detalhes").innerHTML = `
-          <p>Ocorreu um erro ao processar seu teste. Por favor, tente novamente.</p>
-          <div class="container" style="margin-top: 15px;">
-            <button id="retry-button">Tentar Novamente</button>
-          </div>
-        `;
-        
-        document.getElementById("retry-button").addEventListener("click", function() {
-          document.getElementById("resultado-container").classList.add("hidden");
-          document.getElementById("quiz").classList.remove("hidden");
-          enviarResultados();
-        });
-        
-        console.error("Erro:", err);
-      });
+      // Mostrar mensagem de carregamento
+      document.getElementById("resultado-container").classList.remove("hidden");
+      document.getElementById("perfil-titulo").textContent = "Processando resultados...";
+      document.getElementById("perfil-detalhes").innerHTML = "<p>Aguarde enquanto analisamos suas respostas...</p>";
+      
+      // Preparar dados para envio
+      const dadosEnvio = {
+        userName: userName,
+        userEmail: userEmail,
+        userAnswers: respostas,
+        _tempMapping: perguntasEnviadas
+      };
+      
+      // Simular processamento (normalmente seria uma chamada de API)
+      setTimeout(() => {
+        processarResultados(dadosEnvio);
+      }, 1500);
     }
 
-    // Adicionar evento ao botão de início quando o DOM estiver carregado
-    document.addEventListener("DOMContentLoaded", function() {
-      document.getElementById("start-button").addEventListener("click", startTest);
+    // Função para processar resultados (simulando resposta de API)
+    function processarResultados(dadosEnvio) {
+      // Mapeamento de perfis
+      const profileMap = {
+        'focado': 'Tubarão',
+        'idealista': 'Águia',
+        'afetivo': 'Gato',
+        'organizado': 'Lobo'
+      };
       
-      // Verificar se há parâmetro de debug na URL
-      if (window.location.search.includes('debug=true')) {
-        debugMode = true;
-        document.getElementById("debug-info").style.display = "block";
-        document.getElementById("debug-info").textContent = "Modo de debug ativado";
+      // Inicializar contadores
+      let counters = {
+        'Tubarão': 0,
+        'Águia': 0,
+        'Gato': 0,
+        'Lobo': 0
+      };
+      
+      // Processar respostas
+      for (const questionIndexStr in dadosEnvio.userAnswers) {
+        const questionIndexInt = parseInt(questionIndexStr, 10);
+        const answerLetter = dadosEnvio.userAnswers[questionIndexStr];
+        
+        const questionMapping = dadosEnvio._tempMapping.find(m => m.id === questionIndexInt);
+        if (questionMapping && questionMapping.perfilPorLetra[answerLetter]) {
+          const perfil = questionMapping.perfilPorLetra[answerLetter];
+          const perfilAnimal = profileMap[perfil];
+          if (perfilAnimal) {
+            counters[perfilAnimal]++;
+          }
+        }
       }
+      
+      // Calcular percentuais
+      const totalQuestions = Object.keys(dadosEnvio.userAnswers).length;
+      const percentages = {};
+      for (const profile in counters) {
+        percentages[profile] = Math.round((counters[profile] / totalQuestions) * 100);
+      }
+      
+      // Ordenar perfis
+      const sortedProfiles = Object.entries(percentages)
+        .sort(([, percentA], [, percentB]) => percentB - percentA);
+      const resultadoOrdenado = sortedProfiles.map(([profile, percent]) => `${profile} (${percent}%)`);
+      
+      // Identificar perfil predominante
+      const perfilPredominante = sortedProfiles.length > 0 ? sortedProfiles[0][0] : 'Indefinido';
+      
+      // Montar resultado
+      const resultado = {
+        userName: dadosEnvio.userName,
+        resultadoOrdenado: resultadoOrdenado,
+        percentuais: percentages,
+        perfilPredominante: perfilPredominante
+      };
+      
+      // Simular resposta JSON
+      const jsonResponse = JSON.stringify({ output: resultado });
+      
+      // Mostrar resultado
+      mostrarResultado(jsonResponse);
+    }
+
+    // Função para mostrar resultado
+    function mostrarResultado(jsonResponse) {
+      // Extrair informações da resposta
+      const resultado = extrairInformacoesResposta(jsonResponse);
+      
+      // Atualizar título
+      document.getElementById("perfil-titulo").textContent = `Resultado para ${resultado.userName}`;
+      
+      // Descrições dos perfis
+      const descricoesPerfis = {
+        'Águia': {
+          titulo: 'Idealista',
+          descricao: 'Você é criativo, inovador e visionário. Gosta de explorar novas possibilidades e tem facilidade para inspirar os outros com suas ideias. Valoriza a liberdade e a expressão pessoal.'
+        },
+        'Tubarão': {
+          titulo: 'Focado',
+          descricao: 'Você é determinado, direto e orientado a resultados. Gosta de desafios e tem facilidade para tomar decisões rápidas. Valoriza eficiência e produtividade acima de tudo.'
+        },
+        'Gato': {
+          titulo: 'Afetivo',
+          descricao: 'Você é empático, harmonioso e cooperativo. Gosta de trabalhar em equipe e tem facilidade para construir relacionamentos. Valoriza a estabilidade e o bem-estar de todos.'
+        },
+        'Lobo': {
+          titulo: 'Organizado',
+          descricao: 'Você é metódico, detalhista e analítico. Gosta de processos bem definidos e tem facilidade para identificar falhas e melhorias. Valoriza precisão e qualidade.'
+        }
+      };
+      
+      // Construir detalhes do perfil
+      let detalhesHTML = '';
+      
+      // Adicionar descrição do perfil predominante
+      const perfilPredominante = resultado.perfilPredominante;
+      if (perfilPredominante && descricoesPerfis[perfilPredominante]) {
+        detalhesHTML += `<p class="perfil-predominante">Seu perfil predominante é: ${perfilPredominante} (${descricoesPerfis[perfilPredominante].titulo})</p>`;
+        detalhesHTML += `<p>${descricoesPerfis[perfilPredominante].descricao}</p>`;
+      }
+      
+      // Adicionar resultados ordenados
+      detalhesHTML += '<p>Seus resultados completos:</p>';
+      resultado.resultadoOrdenado.forEach(perfil => {
+        detalhesHTML += `<p class="perfil-item">${perfil}</p>`;
+      });
+      
+      // Atualizar detalhes
+      document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
+      
+      // Criar gráfico
+      criarGrafico(resultado.percentuais);
+    }
+
+    // Função para criar gráfico
+    function criarGrafico(percentuais) {
+      const canvas = document.getElementById('graficoPerfil');
+      const ctx = canvas.getContext('2d');
+      
+      // Limpar canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Configurações do gráfico
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = Math.min(centerX, centerY) - 10;
+      
+      // Cores para cada perfil
+      const cores = {
+        'Águia': '#3498db',    // Azul
+        'Tubarão': '#e74c3c',  // Vermelho
+        'Gato': '#2ecc71',     // Verde
+        'Lobo': '#f39c12'      // Laranja
+      };
+      
+      // Desenhar gráfico de pizza
+      let startAngle = 0;
+      const total = Object.values(percentuais).reduce((sum, value) => sum + value, 0);
+      
+      for (const [perfil, percentual] of Object.entries(percentuais)) {
+        // Calcular ângulo
+        const sliceAngle = (percentual / total) * 2 * Math.PI;
+        
+        // Desenhar fatia
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        
+        // Preencher com cor
+        ctx.fillStyle = cores[perfil] || '#999';
+        ctx.fill();
+        
+        // Adicionar borda
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Calcular posição do texto
+        const midAngle = startAngle + sliceAngle / 2;
+        const textRadius = radius * 0.7;
+        const textX = centerX + Math.cos(midAngle) * textRadius;
+        const textY = centerY + Math.sin(midAngle) * textRadius;
+        
+        // Adicionar texto
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${perfil}`, textX, textY);
+        ctx.font = '12px sans-serif';
+        ctx.fillText(`${percentual}%`, textX, textY + 20);
+        
+        // Atualizar ângulo inicial para próxima fatia
+        startAngle += sliceAngle;
+      }
+      
+      // Adicionar legenda
+      let legendY = canvas.height - 80;
+      ctx.textAlign = 'left';
+      
+      for (const [perfil, cor] of Object.entries(cores)) {
+        // Desenhar quadrado colorido
+        ctx.fillStyle = cor;
+        ctx.fillRect(20, legendY, 15, 15);
+        
+        // Adicionar texto
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px sans-serif';
+        ctx.fillText(`${perfil}: ${descricoesPerfis[perfil].titulo}`, 45, legendY + 8);
+        
+        // Atualizar posição Y para próximo item
+        legendY += 20;
+      }
+    }
+
+    // Descrições dos perfis
+    const descricoesPerfis = {
+      'Águia': {
+        titulo: 'Idealista',
+        descricao: 'Você é criativo, inovador e visionário. Gosta de explorar novas possibilidades e tem facilidade para inspirar os outros com suas ideias. Valoriza a liberdade e a expressão pessoal.'
+      },
+      'Tubarão': {
+        titulo: 'Focado',
+        descricao: 'Você é determinado, direto e orientado a resultados. Gosta de desafios e tem facilidade para tomar decisões rápidas. Valoriza eficiência e produtividade acima de tudo.'
+      },
+      'Gato': {
+        titulo: 'Afetivo',
+        descricao: 'Você é empático, harmonioso e cooperativo. Gosta de trabalhar em equipe e tem facilidade para construir relacionamentos. Valoriza a estabilidade e o bem-estar de todos.'
+      },
+      'Lobo': {
+        titulo: 'Organizado',
+        descricao: 'Você é metódico, detalhista e analítico. Gosta de processos bem definidos e tem facilidade para identificar falhas e melhorias. Valoriza precisão e qualidade.'
+      }
+    };
+
+    // Adicionar eventos
+    document.getElementById("start-button").addEventListener("click", startTest);
+    document.getElementById("restart-button").addEventListener("click", function() {
+      // Resetar variáveis
+      respostas = {};
+      perguntasEnviadas = [];
+      perguntaAtual = 0;
+      
+      // Esconder resultado
+      document.getElementById("resultado-container").classList.add("hidden");
+      
+      // Mostrar introdução
+      document.getElementById("intro-container").classList.remove("hidden");
     });
   </script>
-  
-  <!-- Adicionar Chart.js para o gráfico -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
