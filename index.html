@@ -468,104 +468,41 @@
       };
       
       try {
-        // Tentar extrair o objeto JSON da resposta
-        let jsonData;
+        // Tentar extrair diretamente os valores importantes usando regex
+        const userNameMatch = rawData.match(/userName"\s*:\s*"([^"]+)"/);
+        const perfilPredominanteMatch = rawData.match(/perfilPredominante"\s*:\s*"([^"]+)"/);
+        const resultadoOrdenadoMatch = rawData.match(/resultadoOrdenado"\s*:\s*"([^"]+)"/);
         
-        try {
-          // Primeiro, tentar fazer o parse do JSON completo
-          jsonData = JSON.parse(rawData);
-          
-          // Se for um array, pegar o primeiro item
-          if (Array.isArray(jsonData)) {
-            jsonData = jsonData[0];
-          }
-          
-          // Se tiver uma propriedade 'response', extrair e fazer parse
-          if (jsonData && jsonData.response) {
-            // A resposta pode estar como string JSON com escape
-            if (typeof jsonData.response === 'string') {
-              jsonData = JSON.parse(jsonData.response);
-            } else {
-              jsonData = jsonData.response;
-            }
-          }
-        } catch (e) {
-          console.log("Erro no primeiro parse, tentando método alternativo:", e);
-          
-          // Tentar extrair o JSON usando regex
-          const jsonMatch = rawData.match(/\{.*"output".*\}/s);
-          if (jsonMatch) {
-            // Limpar a string de caracteres de escape
-            const cleanedJson = jsonMatch[0].replace(/\\n/g, '').replace(/\\"/g, '"');
-            jsonData = JSON.parse(cleanedJson);
-          } else {
-            throw new Error("Formato de resposta não reconhecido");
-          }
-        }
+        const extractedUserName = userNameMatch ? userNameMatch[1] : userName;
+        const extractedPerfilPredominante = perfilPredominanteMatch ? perfilPredominanteMatch[1] : "";
         
-        // Verificar se temos o objeto output
-        if (!jsonData || !jsonData.output) {
-          throw new Error("Objeto output não encontrado na resposta");
-        }
-        
-        const output = jsonData.output;
-        
-        // Extrair nome do usuário
-        const extractedUserName = output.userName || userName;
-        
-        // Extrair perfil predominante
-        const extractedPerfilPredominante = output.perfilPredominante || "";
-        
-        // Extrair e processar resultadoOrdenado
         let extractedResultadoOrdenado = [];
-        
-        if (output.resultadoOrdenado) {
-          // Se resultadoOrdenado for uma string, dividir por vírgulas
-          if (typeof output.resultadoOrdenado === 'string') {
-            extractedResultadoOrdenado = output.resultadoOrdenado.split(',').map(item => item.trim());
-          } 
-          // Se for um array, usar diretamente
-          else if (Array.isArray(output.resultadoOrdenado)) {
-            extractedResultadoOrdenado = output.resultadoOrdenado;
-          }
+        if (resultadoOrdenadoMatch) {
+          extractedResultadoOrdenado = resultadoOrdenadoMatch[1].split(',').map(item => item.trim());
         }
         
-        // Extrair e processar percentuais
+        // Extrair percentuais do resultadoOrdenado
         let extractedPercentuais = {};
-        
-        // Se percentuais for um objeto, usar diretamente
-        if (output.percentuais && typeof output.percentuais === 'object' && output.percentuais !== null && output.percentuais.toString() !== '[object Object]') {
-          extractedPercentuais = output.percentuais;
-        } 
-        // Se não tiver percentuais válidos, extrair dos resultadoOrdenado
-        else if (extractedResultadoOrdenado.length > 0) {
-          // Tentar extrair percentuais do resultadoOrdenado
-          extractedResultadoOrdenado.forEach(item => {
-            const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
-            if (match) {
-              const perfil = match[1].trim();
-              const percentual = parseInt(match[2], 10);
-              extractedPercentuais[perfil] = percentual;
-            }
-          });
-        }
+        extractedResultadoOrdenado.forEach(item => {
+          const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
+          if (match) {
+            const perfil = match[1].trim();
+            const percentual = parseInt(match[2], 10);
+            extractedPercentuais[perfil] = percentual;
+          }
+        });
         
         // Se ainda não tiver percentuais, criar valores padrão
-        if (Object.keys(extractedPercentuais).length === 0) {
+        if (Object.keys(extractedPercentuais).length === 0 && extractedPerfilPredominante) {
           extractedPercentuais = {
             "Águia": 0,
             "Gato": 0,
             "Lobo": 0,
             "Tubarão": 0
           };
-          
-          // Se tiver perfil predominante, dar um valor maior para ele
-          if (extractedPerfilPredominante) {
-            extractedPercentuais[extractedPerfilPredominante] = 100;
-          }
+          extractedPercentuais[extractedPerfilPredominante] = 100;
         }
         
-        // Verificar se temos dados suficientes
         const temDadosSuficientes = extractedPerfilPredominante && 
                                    Object.keys(extractedPercentuais).length > 0;
         
