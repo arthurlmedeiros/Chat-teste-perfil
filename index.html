@@ -468,9 +468,14 @@
       };
       
       try {
-        // Tentar extrair diretamente os valores importantes usando regex
+        // Extrair diretamente os valores importantes usando regex
+        // Buscar userName em qualquer parte da string
         const userNameMatch = rawData.match(/userName"\s*:\s*"([^"]+)"/);
+        
+        // Buscar perfilPredominante em qualquer parte da string
         const perfilPredominanteMatch = rawData.match(/perfilPredominante"\s*:\s*"([^"]+)"/);
+        
+        // Buscar resultadoOrdenado em qualquer parte da string
         const resultadoOrdenadoMatch = rawData.match(/resultadoOrdenado"\s*:\s*"([^"]+)"/);
         
         const extractedUserName = userNameMatch ? userNameMatch[1] : userName;
