@@ -468,15 +468,37 @@
       };
       
       try {
+        // Pré-processamento para remover camadas de escape
+        let processedData = rawData;
+        
+        // Primeiro, remover aspas externas se existirem
+        if (processedData.startsWith('"') && processedData.endsWith('"')) {
+          processedData = processedData.slice(1, -1);
+          if (debugMode) {
+            document.getElementById("debug-info").textContent += "\n\nRemovidas aspas externas";
+          }
+        }
+        
+        // Desescapar barras invertidas e aspas
+        processedData = processedData.replace(/\\\\/g, '\\');
+        processedData = processedData.replace(/\\"/g, '"');
+        
+        // Normalizar quebras de linha
+        processedData = processedData.replace(/\\n/g, ' ');
+        
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nDados pré-processados: " + processedData;
+        }
+        
         // Extrair diretamente os valores importantes usando regex
         // Buscar userName em qualquer parte da string (primeira ocorrência)
-        const userNameMatch = rawData.match(/userName"\s*:\s*"([^"]+)"/);
+        const userNameMatch = processedData.match(/userName"?\s*:\s*"([^"]+)"/);
         
         // Buscar perfilPredominante em qualquer parte da string (primeira ocorrência)
-        const perfilPredominanteMatch = rawData.match(/perfilPredominante"\s*:\s*"([^"]+)"/);
+        const perfilPredominanteMatch = processedData.match(/perfilPredominante"?\s*:\s*"([^"]+)"/);
         
         // Buscar resultadoOrdenado em qualquer parte da string (primeira ocorrência)
-        const resultadoOrdenadoMatch = rawData.match(/resultadoOrdenado"\s*:\s*"([^"]+)"/);
+        const resultadoOrdenadoMatch = processedData.match(/resultadoOrdenado"?\s*:\s*"([^"]+)"/);
         
         // Se não encontrou nenhum dos campos essenciais, retornar dados insuficientes
         if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
@@ -551,7 +573,7 @@
         if (debugMode) {
           document.getElementById("debug-info").style.display = "block";
           document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
-          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + rawData;
+          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(rawData);
         }
         
         // Retornar resultado padrão com flag de dados insuficientes
