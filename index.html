@@ -103,6 +103,21 @@
       margin: 5px 0;
       line-height: 1.5;
     }
+    @media print {
+      body {
+        background-color: white;
+        color: black;
+      }
+      .perfil-predominante {
+        color: #007bff !important;
+      }
+      .perfil-detalhado {
+        background-color: #f8f9fa;
+      }
+      .perfil-secao h4 {
+        color: #333;
+      }
+    }
   </style>
 </head>
 <body>
@@ -378,6 +393,7 @@
     let perguntaAtual = 0;
     let debugMode = false; // Desativado por padrão
     let resultadoAtual = null; // Para armazenar o resultado atual para o PDF
+    let graficoChart = null; // Para armazenar a instância do gráfico
 
     // Informações detalhadas sobre cada perfil
     const perfilDetalhado = {
@@ -763,7 +779,7 @@
           // para que o ponto mínimo não fique no centro do gráfico
           const scaleMin = minValue > 0 ? Math.max(0, minValue - 5) : 0;
           
-          new Chart(ctx, {
+          graficoChart = new Chart(ctx, {
             type: "radar",
             data: {
               labels: labels.map(label => `${label} (${descricoesPerfis[label].titulo})`),
@@ -878,89 +894,140 @@
         return;
       }
       
-      // Capturar o conteúdo atual da tela de resultados
-      const resultadoContainer = document.getElementById("resultado-container");
+      // Mostrar mensagem de carregamento
+      const downloadBtn = document.getElementById("download-pdf");
+      const originalText = downloadBtn.textContent;
+      downloadBtn.textContent = "Gerando PDF...";
+      downloadBtn.disabled = true;
       
-      // Configurações para o html2pdf
-      const opt = {
-        margin: 10,
-        filename: `Perfil_Comportamental_${resultadoAtual.userName.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          logging: true
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-      
-      // Criar uma cópia do container para modificar sem afetar a visualização
-      const cloneContainer = resultadoContainer.cloneNode(true);
-      
-      // Remover elementos que não devem aparecer no PDF
-      const debugInfo = cloneContainer.querySelector("#debug-info");
-      if (debugInfo) debugInfo.remove();
-      
-      const buttons = cloneContainer.querySelectorAll("button");
-      buttons.forEach(button => button.remove());
-      
-      // Ajustar estilos para o PDF
-      cloneContainer.style.backgroundColor = "white";
-      cloneContainer.style.color = "black";
-      cloneContainer.style.padding = "20px";
-      
-      // Ajustar títulos e textos para cor preta
-      const titulos = cloneContainer.querySelectorAll("h3, h4");
-      titulos.forEach(titulo => {
-        titulo.style.color = "#333";
-      });
-      
-      // Ajustar a classe perfil-predominante para cor azul no PDF
-      const perfilPredominanteElements = cloneContainer.querySelectorAll(".perfil-predominante");
-      perfilPredominanteElements.forEach(el => {
-        el.style.color = "#007bff";
-      });
-      
-      // Ajustar o fundo do bloco de perfil detalhado
-      const perfilDetalhado = cloneContainer.querySelector(".perfil-detalhado");
-      if (perfilDetalhado) {
-        perfilDetalhado.style.backgroundColor = "#f8f9fa";
-        perfilDetalhado.style.color = "#333";
-      }
-      
-      // Adicionar um título ao PDF
-      const titulo = document.createElement("h1");
-      titulo.textContent = "Resultado do Teste de Perfil Comportamental";
-      titulo.style.textAlign = "center";
-      titulo.style.color = "#333";
-      titulo.style.marginBottom = "20px";
-      cloneContainer.insertBefore(titulo, cloneContainer.firstChild);
-      
-      // Adicionar rodapé
-      const footer = document.createElement("div");
-      footer.style.textAlign = "center";
-      footer.style.marginTop = "30px";
-      footer.style.fontSize = "12px";
-      footer.style.color = "#666";
-      
-      const dataAtual = new Date().toLocaleDateString();
-      footer.innerHTML = `<p>Teste realizado em ${dataAtual}</p>`;
-      cloneContainer.appendChild(footer);
-      
-      // Adicionar temporariamente ao documento para renderização
-      document.body.appendChild(cloneContainer);
-      cloneContainer.style.position = "absolute";
-      cloneContainer.style.left = "-9999px";
-      
-      // Gerar o PDF
-      html2pdf().from(cloneContainer).set(opt).save().then(() => {
-        // Remover o clone após a geração do PDF
-        document.body.removeChild(cloneContainer);
-      }).catch(err => {
-        console.error("Erro ao gerar PDF:", err);
-        alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
-        document.body.removeChild(cloneContainer);
-      });
+      // Usar setTimeout para permitir que a mensagem de carregamento seja exibida
+      setTimeout(() => {
+        try {
+          // Capturar o conteúdo atual da tela de resultados
+          const resultadoContainer = document.getElementById("resultado-container");
+          
+          // Criar uma cópia do container para modificar sem afetar a visualização
+          const cloneContainer = resultadoContainer.cloneNode(true);
+          
+          // Remover elementos que não devem aparecer no PDF
+          const debugInfo = cloneContainer.querySelector("#debug-info");
+          if (debugInfo) debugInfo.remove();
+          
+          const buttons = cloneContainer.querySelectorAll("button");
+          buttons.forEach(button => button.remove());
+          
+          // Ajustar estilos para o PDF
+          cloneContainer.style.backgroundColor = "white";
+          cloneContainer.style.color = "black";
+          cloneContainer.style.padding = "20px";
+          cloneContainer.style.width = "100%";
+          cloneContainer.style.maxWidth = "800px";
+          
+          // Ajustar títulos e textos para cor preta
+          const titulos = cloneContainer.querySelectorAll("h3, h4");
+          titulos.forEach(titulo => {
+            titulo.style.color = "#333";
+          });
+          
+          // Ajustar a classe perfil-predominante para cor azul no PDF
+          const perfilPredominanteElements = cloneContainer.querySelectorAll(".perfil-predominante");
+          perfilPredominanteElements.forEach(el => {
+            el.style.color = "#007bff";
+          });
+          
+          // Ajustar o fundo do bloco de perfil detalhado
+          const perfilDetalhado = cloneContainer.querySelector(".perfil-detalhado");
+          if (perfilDetalhado) {
+            perfilDetalhado.style.backgroundColor = "#f8f9fa";
+            perfilDetalhado.style.color = "#333";
+            
+            // Ajustar cores dos títulos dentro do perfil detalhado
+            const titulosDetalhes = perfilDetalhado.querySelectorAll("h4");
+            titulosDetalhes.forEach(titulo => {
+              titulo.style.color = "#333";
+            });
+          }
+          
+          // Adicionar um título ao PDF
+          const titulo = document.createElement("h1");
+          titulo.textContent = "Resultado do Teste de Perfil Comportamental";
+          titulo.style.textAlign = "center";
+          titulo.style.color = "#333";
+          titulo.style.marginBottom = "20px";
+          cloneContainer.insertBefore(titulo, cloneContainer.firstChild);
+          
+          // Adicionar rodapé
+          const footer = document.createElement("div");
+          footer.style.textAlign = "center";
+          footer.style.marginTop = "30px";
+          footer.style.fontSize = "12px";
+          footer.style.color = "#666";
+          
+          const dataAtual = new Date().toLocaleDateString();
+          footer.innerHTML = `<p>Teste realizado em ${dataAtual}</p>`;
+          cloneContainer.appendChild(footer);
+          
+          // Importante: Converter o canvas do gráfico em imagem antes de gerar o PDF
+          if (graficoChart) {
+            const canvas = document.getElementById("graficoPerfil");
+            const graficoImg = document.createElement("img");
+            graficoImg.src = canvas.toDataURL("image/png");
+            graficoImg.style.width = "100%";
+            graficoImg.style.maxWidth = "500px";
+            graficoImg.style.margin = "20px auto";
+            graficoImg.style.display = "block";
+            
+            // Substituir o canvas pela imagem no clone
+            const graficoContainer = cloneContainer.querySelector("#grafico-container");
+            if (graficoContainer) {
+              graficoContainer.innerHTML = "";
+              graficoContainer.appendChild(graficoImg);
+            }
+          }
+          
+          // Adicionar temporariamente ao documento para renderização
+          document.body.appendChild(cloneContainer);
+          cloneContainer.style.position = "absolute";
+          cloneContainer.style.left = "-9999px";
+          
+          // Configurações para o html2pdf
+          const opt = {
+            margin: 10,
+            filename: `Perfil_Comportamental_${resultadoAtual.userName.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+              scale: 2,
+              useCORS: true,
+              logging: false
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          
+          // Gerar o PDF
+          html2pdf()
+            .from(cloneContainer)
+            .set(opt)
+            .save()
+            .then(() => {
+              // Remover o clone após a geração do PDF
+              document.body.removeChild(cloneContainer);
+              downloadBtn.textContent = originalText;
+              downloadBtn.disabled = false;
+            })
+            .catch(err => {
+              console.error("Erro ao gerar PDF:", err);
+              alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
+              document.body.removeChild(cloneContainer);
+              downloadBtn.textContent = originalText;
+              downloadBtn.disabled = false;
+            });
+        } catch (err) {
+          console.error("Erro ao preparar PDF:", err);
+          alert("Ocorreu um erro ao preparar o PDF. Por favor, tente novamente.");
+          downloadBtn.textContent = originalText;
+          downloadBtn.disabled = false;
+        }
+      }, 100);
     }
 
     // Função para enviar resultados
