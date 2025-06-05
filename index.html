@@ -348,7 +348,7 @@
     let userEmail = "";
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
-    let debugMode = true; // Ativar para mostrar informações de debug
+    let debugMode = false; // Desativado por padrão
     let resultadoAtual = null; // Para armazenar o resultado atual para o PDF
 
     // Função para embaralhar arrays
@@ -667,8 +667,12 @@
       
       // Tentar criar o gráfico se Chart.js estiver disponível
       try {
-        const labels = Object.keys(percentuais);
-        const values = Object.values(percentuais);
+        // Definir a ordem padrão dos perfis para o gráfico
+        const perfilOrdem = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
+        
+        // Preparar os dados na ordem correta
+        const labels = perfilOrdem;
+        const values = perfilOrdem.map(perfil => percentuais[perfil] || 0);
         
         if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
           const ctx = document.getElementById("graficoPerfil").getContext("2d");
@@ -715,7 +719,10 @@
                   },
                   ticks: {
                     color: '#fff',
-                    backdropColor: 'rgba(0, 0, 0, 0.7)'
+                    backdropColor: 'rgba(0, 0, 0, 0.7)',
+                    beginAtZero: true,
+                    max: 100,
+                    stepSize: 10
                   }
                 }
               },
