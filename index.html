@@ -348,7 +348,7 @@
     let userEmail = "";
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
-    let debugMode = false; // Ativar para mostrar informações de debug
+    let debugMode = true; // Ativar para mostrar informações de debug
     let resultadoAtual = null; // Para armazenar o resultado atual para o PDF
 
     // Função para embaralhar arrays
@@ -469,26 +469,46 @@
       
       try {
         // Extrair diretamente os valores importantes usando regex
-        // Buscar userName em qualquer parte da string
+        // Buscar userName em qualquer parte da string (primeira ocorrência)
         const userNameMatch = rawData.match(/userName"\s*:\s*"([^"]+)"/);
         
-        // Buscar perfilPredominante em qualquer parte da string
+        // Buscar perfilPredominante em qualquer parte da string (primeira ocorrência)
         const perfilPredominanteMatch = rawData.match(/perfilPredominante"\s*:\s*"([^"]+)"/);
         
-        // Buscar resultadoOrdenado em qualquer parte da string
+        // Buscar resultadoOrdenado em qualquer parte da string (primeira ocorrência)
         const resultadoOrdenadoMatch = rawData.match(/resultadoOrdenado"\s*:\s*"([^"]+)"/);
         
-        const extractedUserName = userNameMatch ? userNameMatch[1] : userName;
-        const extractedPerfilPredominante = perfilPredominanteMatch ? perfilPredominanteMatch[1] : "";
-        
-        let extractedResultadoOrdenado = [];
-        if (resultadoOrdenadoMatch) {
-          extractedResultadoOrdenado = resultadoOrdenadoMatch[1].split(',').map(item => item.trim());
+        // Se não encontrou nenhum dos campos essenciais, retornar dados insuficientes
+        if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
+          if (debugMode) {
+            document.getElementById("debug-info").textContent += "\n\nDados insuficientes: Não foi possível encontrar campos essenciais.";
+            if (!userNameMatch) document.getElementById("debug-info").textContent += "\n- userName não encontrado";
+            if (!perfilPredominanteMatch) document.getElementById("debug-info").textContent += "\n- perfilPredominante não encontrado";
+            if (!resultadoOrdenadoMatch) document.getElementById("debug-info").textContent += "\n- resultadoOrdenado não encontrado";
+          }
+          return {
+            output: resultadoPadrao,
+            temDadosSuficientes: false
+          };
         }
+        
+        const extractedUserName = userNameMatch[1];
+        const extractedPerfilPredominante = perfilPredominanteMatch[1];
+        
+        // Processar resultadoOrdenado para extrair os perfis e percentuais
+        const resultadoOrdenadoStr = resultadoOrdenadoMatch[1];
+        
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nResultadoOrdenado extraído: " + resultadoOrdenadoStr;
+        }
+        
+        // Dividir a string por vírgulas e limpar espaços
+        const extractedResultadoOrdenado = resultadoOrdenadoStr.split(',').map(item => item.trim());
         
         // Extrair percentuais do resultadoOrdenado
         let extractedPercentuais = {};
         extractedResultadoOrdenado.forEach(item => {
+          // Regex para extrair perfil e percentual
           const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
           if (match) {
             const perfil = match[1].trim();
@@ -497,19 +517,14 @@
           }
         });
         
-        // Se ainda não tiver percentuais, criar valores padrão
-        if (Object.keys(extractedPercentuais).length === 0 && extractedPerfilPredominante) {
-          extractedPercentuais = {
-            "Águia": 0,
-            "Gato": 0,
-            "Lobo": 0,
-            "Tubarão": 0
-          };
-          extractedPercentuais[extractedPerfilPredominante] = 100;
+        if (debugMode) {
+          document.getElementById("debug-info").textContent += "\n\nPercentuais extraídos: " + JSON.stringify(extractedPercentuais);
         }
         
-        const temDadosSuficientes = extractedPerfilPredominante && 
-                                   Object.keys(extractedPercentuais).length > 0;
+        // Verificar se temos dados suficientes
+        const temDadosSuficientes = 
+          extractedPerfilPredominante && 
+          Object.keys(extractedPercentuais).length > 0;
         
         if (debugMode) {
           document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + 
