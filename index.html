@@ -79,6 +79,30 @@
     .download-btn:hover {
       background-color: #218838;
     }
+    .perfil-detalhado {
+      margin-top: 30px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .perfil-detalhado h3 {
+      color: #007bff;
+      margin-top: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 10px;
+    }
+    .perfil-secao {
+      margin-bottom: 20px;
+    }
+    .perfil-secao h4 {
+      color: #f8f9fa;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+    }
+    .perfil-secao p {
+      margin: 5px 0;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -105,6 +129,10 @@
     <div id="grafico-container">
       <canvas id="graficoPerfil" width="300" height="300"></canvas>
     </div>
+    
+    <!-- Novo bloco para informações detalhadas do perfil predominante -->
+    <div id="perfil-detalhado" class="perfil-detalhado"></div>
+    
     <div class="container" style="margin-top: 20px;">
       <button id="download-pdf" class="download-btn">Baixar Resultado em PDF</button>
       <button id="restart-button">Refazer Teste</button>
@@ -350,6 +378,42 @@
     let perguntaAtual = 0;
     let debugMode = false; // Desativado por padrão
     let resultadoAtual = null; // Para armazenar o resultado atual para o PDF
+
+    // Informações detalhadas sobre cada perfil
+    const perfilDetalhado = {
+      'Águia': {
+        caracteristicas: 'Visionária, criativa, busca inovação e liberdade.',
+        tracos: 'Explora novas ideias, valoriza autonomia e pensa no futuro.',
+        pontosFortesTexto: 'Visão estratégica e criatividade.',
+        pontosMelhoriaTexto: 'Pode ignorar detalhes e parecer distante.',
+        motivacoesTexto: 'Liberdade, inovação e crescimento pessoal.',
+        valoresTexto: 'Autenticidade e visão de futuro.'
+      },
+      'Tubarão': {
+        caracteristicas: 'Competitiva, focada em resultados, direta e decidida.',
+        tracos: 'Assume controle, busca vencer e enfrenta desafios de frente.',
+        pontosFortesTexto: 'Foco em metas e liderança.',
+        pontosMelhoriaTexto: 'Tende a ser autoritário e impaciente.',
+        motivacoesTexto: 'Superação, reconhecimento e vitória.',
+        valoresTexto: 'Eficiência e conquista.'
+      },
+      'Gato': {
+        caracteristicas: 'Afetivo, sensível, comunicativo e voltado a pessoas.',
+        tracos: 'Cria laços, evita conflitos e gosta de ambientes harmoniosos.',
+        pontosFortesTexto: 'Empatia e habilidade de engajamento.',
+        pontosMelhoriaTexto: 'Pode se esquivar de decisões difíceis.',
+        motivacoesTexto: 'Relações afetivas, aprovação e bem-estar coletivo.',
+        valoresTexto: 'Harmonia e empatia.'
+      },
+      'Lobo': {
+        caracteristicas: 'Organizado, leal, confiável e metódico.',
+        tracos: 'Segue regras, preza pela segurança e cumpre rotinas.',
+        pontosFortesTexto: 'Confiabilidade e precisão.',
+        pontosMelhoriaTexto: 'Resiste a mudanças e é avesso ao risco.',
+        motivacoesTexto: 'Ordem, estabilidade e previsibilidade.',
+        valoresTexto: 'Lealdade e responsabilidade.'
+      }
+    };
 
     // Função para embaralhar arrays
     function embaralhar(array) {
@@ -655,6 +719,9 @@
       detalhesHTML += "<p>Obrigado por participar do teste!</p>";
       document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
       
+      // Exibir informações detalhadas do perfil predominante
+      exibirPerfilDetalhado(perfilPredominante);
+      
       // Adicionar evento ao botão de reiniciar
       document.getElementById("restart-button").addEventListener("click", function() {
         location.reload();
@@ -747,6 +814,53 @@
       }
     }
 
+    // Função para exibir informações detalhadas do perfil predominante
+    function exibirPerfilDetalhado(perfilPredominante) {
+      const perfilDetalhadoContainer = document.getElementById("perfil-detalhado");
+      const infoPerfil = perfilDetalhado[perfilPredominante];
+      
+      if (!infoPerfil) {
+        perfilDetalhadoContainer.style.display = "none";
+        return;
+      }
+      
+      let html = `
+        <h3>Seu Perfil ${perfilPredominante} em Detalhes</h3>
+        
+        <div class="perfil-secao">
+          <h4>Características Principais</h4>
+          <p>${infoPerfil.caracteristicas}</p>
+        </div>
+        
+        <div class="perfil-secao">
+          <h4>Traços Comportamentais</h4>
+          <p>${infoPerfil.tracos}</p>
+        </div>
+        
+        <div class="perfil-secao">
+          <h4>Pontos Fortes</h4>
+          <p>${infoPerfil.pontosFortesTexto}</p>
+        </div>
+        
+        <div class="perfil-secao">
+          <h4>Pontos de Melhoria</h4>
+          <p>${infoPerfil.pontosMelhoriaTexto}</p>
+        </div>
+        
+        <div class="perfil-secao">
+          <h4>Motivações</h4>
+          <p>${infoPerfil.motivacoesTexto}</p>
+        </div>
+        
+        <div class="perfil-secao">
+          <h4>Valores</h4>
+          <p>${infoPerfil.valoresTexto}</p>
+        </div>
+      `;
+      
+      perfilDetalhadoContainer.innerHTML = html;
+    }
+
     // Função para gerar PDF com os resultados
     function gerarPDF(resultado, descricoesPerfis) {
       // Criar um elemento temporário para o conteúdo do PDF
@@ -763,6 +877,9 @@
       const nome = resultado.userName;
       const perfilPredominante = resultado.perfilPredominante;
       const resultadoOrdenado = resultado.resultadoOrdenado || [];
+      
+      // Obter informações detalhadas do perfil predominante
+      const infoPerfil = perfilDetalhado[perfilPredominante];
       
       let htmlContent = `
         <html>
@@ -784,6 +901,12 @@
               color: #0056b3;
               margin-top: 20px;
             }
+            h3 {
+              color: #0056b3;
+              margin-top: 15px;
+              border-bottom: 1px solid #dee2e6;
+              padding-bottom: 5px;
+            }
             .perfil-predominante {
               color: #007bff;
               font-weight: bold;
@@ -804,6 +927,13 @@
               padding: 15px;
               border-radius: 5px;
               margin-top: 20px;
+            }
+            .perfil-secao {
+              margin-bottom: 15px;
+            }
+            .perfil-secao h4 {
+              margin-bottom: 5px;
+              color: #495057;
             }
             .footer {
               text-align: center;
@@ -840,11 +970,48 @@
           <div class="grafico-container">
             <img src="${graficoImagem}" alt="Gráfico de Perfil Comportamental">
           </div>
-          
-          <h2>Sobre os perfis:</h2>
       `;
       
+      // Adicionar informações detalhadas do perfil predominante
+      if (infoPerfil) {
+        htmlContent += `
+          <h2>Seu Perfil ${perfilPredominante} em Detalhes</h2>
+          
+          <div class="perfil-secao">
+            <h4>Características Principais</h4>
+            <p>${infoPerfil.caracteristicas}</p>
+          </div>
+          
+          <div class="perfil-secao">
+            <h4>Traços Comportamentais</h4>
+            <p>${infoPerfil.tracos}</p>
+          </div>
+          
+          <div class="perfil-secao">
+            <h4>Pontos Fortes</h4>
+            <p>${infoPerfil.pontosFortesTexto}</p>
+          </div>
+          
+          <div class="perfil-secao">
+            <h4>Pontos de Melhoria</h4>
+            <p>${infoPerfil.pontosMelhoriaTexto}</p>
+          </div>
+          
+          <div class="perfil-secao">
+            <h4>Motivações</h4>
+            <p>${infoPerfil.motivacoesTexto}</p>
+          </div>
+          
+          <div class="perfil-secao">
+            <h4>Valores</h4>
+            <p>${infoPerfil.valoresTexto}</p>
+          </div>
+        `;
+      }
+      
       // Adicionar descrições de todos os perfis
+      htmlContent += `<h2>Sobre os perfis:</h2>`;
+      
       for (const [perfil, info] of Object.entries(descricoesPerfis)) {
         htmlContent += `
           <div class="descricao">
