@@ -72,12 +72,19 @@
       white-space: pre-wrap;
       display: none;
     }
-    .email-btn {
+    .email-status {
       margin-top: 15px;
-      background-color: #28a745;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
     }
-    .email-btn:hover {
-      background-color: #218838;
+    .success {
+      background-color: rgba(40, 167, 69, 0.2);
+      border: 1px solid #28a745;
+    }
+    .error {
+      background-color: rgba(220, 53, 69, 0.2);
+      border: 1px solid #dc3545;
     }
     .perfil-detalhado {
       margin-top: 30px;
@@ -109,14 +116,6 @@
       margin: 10px 0;
       text-align: center;
     }
-    .success {
-      background-color: rgba(40, 167, 69, 0.2);
-      border: 1px solid #28a745;
-    }
-    .error {
-      background-color: rgba(220, 53, 69, 0.2);
-      border: 1px solid #dc3545;
-    }
   </style>
 </head>
 <body>
@@ -147,8 +146,9 @@
     <!-- Novo bloco para informações detalhadas do perfil predominante -->
     <div id="perfil-detalhado" class="perfil-detalhado"></div>
     
+    <div id="email-status" class="email-status hidden"></div>
+    
     <div class="container" style="margin-top: 20px;">
-      <button id="send-email" class="email-btn">Enviar Resultado por E-mail</button>
       <button id="restart-button">Refazer Teste</button>
     </div>
     <div id="notification-area"></div>
@@ -744,11 +744,6 @@
         location.reload();
       });
       
-      // Adicionar evento ao botão de enviar e-mail
-      document.getElementById("send-email").addEventListener("click", function() {
-        enviarResultadoPorEmail();
-      });
-      
       // Tentar criar o gráfico se Chart.js estiver disponível
       try {
         // Definir a ordem padrão dos perfis para o gráfico
@@ -834,9 +829,18 @@
               }
             }
           });
+          
+          // Enviar resultado por e-mail automaticamente após o gráfico ser renderizado
+          setTimeout(() => {
+            enviarResultadoPorEmail();
+          }, 1000);
         }
       } catch (e) {
         console.log("Erro ao criar gráfico:", e);
+        // Mesmo com erro no gráfico, tentar enviar e-mail
+        setTimeout(() => {
+          enviarResultadoPorEmail();
+        }, 1000);
       }
     }
 
@@ -891,15 +895,12 @@
     function enviarResultadoPorEmail() {
       // Verificar se temos resultados para enviar
       if (!resultadoAtual || !resultadoAtual.perfilPredominante) {
-        mostrarNotificacao("Não foi possível enviar o e-mail. Tente novamente.", false);
+        mostrarStatusEmail("Não foi possível enviar o e-mail. Tente novamente mais tarde.", false);
         return;
       }
       
       // Mostrar mensagem de carregamento
-      const emailBtn = document.getElementById("send-email");
-      const originalText = emailBtn.textContent;
-      emailBtn.textContent = "Enviando...";
-      emailBtn.disabled = true;
+      mostrarStatusEmail("Enviando resultado para seu e-mail...", null);
       
       // Preparar dados para envio
       // Capturar a imagem do gráfico se disponível
@@ -933,44 +934,29 @@
       })
       .then(res => res.text())
       .then(data => {
-        // Restaurar o botão
-        emailBtn.textContent = originalText;
-        emailBtn.disabled = false;
-        
         // Mostrar notificação de sucesso
-        mostrarNotificacao(`Resultado enviado com sucesso para ${userEmail}!`, true);
+        mostrarStatusEmail(`Resultado enviado com sucesso para ${userEmail}!`, true);
       })
       .catch(err => {
         console.error("Erro ao enviar e-mail:", err);
         
-        // Restaurar o botão
-        emailBtn.textContent = originalText;
-        emailBtn.disabled = false;
-        
         // Mostrar notificação de erro
-        mostrarNotificacao("Erro ao enviar e-mail. Por favor, tente novamente.", false);
+        mostrarStatusEmail("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", false);
       });
     }
 
-    // Função para mostrar notificações
-    function mostrarNotificacao(mensagem, sucesso) {
-      const notificationArea = document.getElementById("notification-area");
-      const notification = document.createElement("div");
-      notification.className = `notification ${sucesso ? 'success' : 'error'}`;
-      notification.textContent = mensagem;
+    // Função para mostrar status do envio de e-mail
+    function mostrarStatusEmail(mensagem, sucesso) {
+      const emailStatus = document.getElementById("email-status");
+      emailStatus.classList.remove("hidden", "success", "error");
       
-      notificationArea.innerHTML = '';
-      notificationArea.appendChild(notification);
+      if (sucesso === true) {
+        emailStatus.classList.add("success");
+      } else if (sucesso === false) {
+        emailStatus.classList.add("error");
+      }
       
-      // Remover a notificação após 5 segundos
-      setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-          if (notification.parentNode === notificationArea) {
-            notificationArea.removeChild(notification);
-          }
-        }, 500);
-      }, 5000);
+      emailStatus.textContent = mensagem;
     }
 
     // Função para enviar resultados
