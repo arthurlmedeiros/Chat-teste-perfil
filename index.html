@@ -729,7 +729,7 @@
       
       // Adicionar evento ao botão de download PDF
       document.getElementById("download-pdf").addEventListener("click", function() {
-        gerarPDF(output, descricoesPerfis);
+        gerarPDF();
       });
       
       // Tentar criar o gráfico se Chart.js estiver disponível
@@ -740,6 +740,9 @@
         // Preparar os dados na ordem correta
         const labels = perfilOrdem;
         const values = perfilOrdem.map(perfil => percentuais[perfil] || 0);
+        
+        // Encontrar o valor mínimo entre os percentuais (para ajustar a escala)
+        const minValue = Math.min(...Object.values(percentuais));
         
         if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
           const ctx = document.getElementById("graficoPerfil").getContext("2d");
@@ -754,6 +757,11 @@
           
           // Obter cores na mesma ordem dos labels
           const backgroundColors = labels.map(label => cores[label] || '#999');
+          
+          // Calcular o valor mínimo para a escala
+          // Se o valor mínimo for maior que 0, usamos um valor ligeiramente menor
+          // para que o ponto mínimo não fique no centro do gráfico
+          const scaleMin = minValue > 0 ? Math.max(0, minValue - 5) : 0;
           
           new Chart(ctx, {
             type: "radar",
@@ -787,7 +795,8 @@
                   ticks: {
                     color: '#fff',
                     backdropColor: 'rgba(0, 0, 0, 0.7)',
-                    beginAtZero: true,
+                    beginAtZero: false,  // Importante: não começar em zero se o valor mínimo for maior
+                    min: scaleMin,       // Definir o valor mínimo da escala
                     max: 100,
                     stepSize: 10
                   }
@@ -862,191 +871,95 @@
     }
 
     // Função para gerar PDF com os resultados
-    function gerarPDF(resultado, descricoesPerfis) {
-      // Criar um elemento temporário para o conteúdo do PDF
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      document.body.appendChild(tempDiv);
-      
-      // Obter a imagem do gráfico
-      const canvas = document.getElementById('graficoPerfil');
-      const graficoImagem = canvas.toDataURL('image/png');
-      
-      // Criar o conteúdo HTML para o PDF
-      const nome = resultado.userName;
-      const perfilPredominante = resultado.perfilPredominante;
-      const resultadoOrdenado = resultado.resultadoOrdenado || [];
-      
-      // Obter informações detalhadas do perfil predominante
-      const infoPerfil = perfilDetalhado[perfilPredominante];
-      
-      let htmlContent = `
-        <html>
-        <head>
-          <title>Resultado do Teste de Perfil Comportamental</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              color: #333;
-              line-height: 1.6;
-              padding: 20px;
-            }
-            h1 {
-              color: #007bff;
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            h2 {
-              color: #0056b3;
-              margin-top: 20px;
-            }
-            h3 {
-              color: #0056b3;
-              margin-top: 15px;
-              border-bottom: 1px solid #dee2e6;
-              padding-bottom: 5px;
-            }
-            .perfil-predominante {
-              color: #007bff;
-              font-weight: bold;
-            }
-            .perfil-item {
-              margin: 10px 0;
-            }
-            .grafico-container {
-              text-align: center;
-              margin: 30px 0;
-            }
-            .grafico-container img {
-              max-width: 100%;
-              height: auto;
-            }
-            .descricao {
-              background-color: #f8f9fa;
-              padding: 15px;
-              border-radius: 5px;
-              margin-top: 20px;
-            }
-            .perfil-secao {
-              margin-bottom: 15px;
-            }
-            .perfil-secao h4 {
-              margin-bottom: 5px;
-              color: #495057;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 40px;
-              font-size: 12px;
-              color: #6c757d;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Resultado do Teste de Perfil Comportamental</h1>
-          
-          <h2>${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span></h2>
-          
-          <div class="descricao">
-            <p><strong>Descrição do seu perfil predominante:</strong></p>
-            <p>${descricoesPerfis[perfilPredominante].descricao}</p>
-          </div>
-          
-          <h2>Distribuição do seu perfil comportamental:</h2>
-      `;
-      
-      // Adicionar cada perfil como um item formatado
-      resultadoOrdenado.forEach((perfil, index) => {
-        const posicao = index === 0 ? "Predominante" : 
-                       index === 1 ? "Segundo" : 
-                       index === 2 ? "Terceiro" : "Último";
-        
-        htmlContent += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
-      });
-      
-      // Adicionar o gráfico
-      htmlContent += `
-          <div class="grafico-container">
-            <img src="${graficoImagem}" alt="Gráfico de Perfil Comportamental">
-          </div>
-      `;
-      
-      // Adicionar informações detalhadas do perfil predominante
-      if (infoPerfil) {
-        htmlContent += `
-          <h2>Seu Perfil ${perfilPredominante} em Detalhes</h2>
-          
-          <div class="perfil-secao">
-            <h4>Características Principais</h4>
-            <p>${infoPerfil.caracteristicas}</p>
-          </div>
-          
-          <div class="perfil-secao">
-            <h4>Traços Comportamentais</h4>
-            <p>${infoPerfil.tracos}</p>
-          </div>
-          
-          <div class="perfil-secao">
-            <h4>Pontos Fortes</h4>
-            <p>${infoPerfil.pontosFortesTexto}</p>
-          </div>
-          
-          <div class="perfil-secao">
-            <h4>Pontos de Melhoria</h4>
-            <p>${infoPerfil.pontosMelhoriaTexto}</p>
-          </div>
-          
-          <div class="perfil-secao">
-            <h4>Motivações</h4>
-            <p>${infoPerfil.motivacoesTexto}</p>
-          </div>
-          
-          <div class="perfil-secao">
-            <h4>Valores</h4>
-            <p>${infoPerfil.valoresTexto}</p>
-          </div>
-        `;
+    function gerarPDF() {
+      // Verificar se temos resultados para gerar o PDF
+      if (!resultadoAtual || !resultadoAtual.perfilPredominante) {
+        alert("Não foi possível gerar o PDF. Tente novamente.");
+        return;
       }
       
-      // Adicionar descrições de todos os perfis
-      htmlContent += `<h2>Sobre os perfis:</h2>`;
+      // Capturar o conteúdo atual da tela de resultados
+      const resultadoContainer = document.getElementById("resultado-container");
       
-      for (const [perfil, info] of Object.entries(descricoesPerfis)) {
-        htmlContent += `
-          <div class="descricao">
-            <p><strong>${perfil} (${info.titulo}):</strong> ${info.descricao}</p>
-          </div>
-        `;
-      }
-      
-      // Adicionar rodapé
-      const dataAtual = new Date().toLocaleDateString();
-      htmlContent += `
-          <div class="footer">
-            <p>Teste realizado em ${dataAtual}</p>
-            <p>Teste de Perfil Comportamental</p>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      // Colocar o conteúdo no elemento temporário
-      tempDiv.innerHTML = htmlContent;
-      
-      // Converter para PDF usando html2pdf.js
+      // Configurações para o html2pdf
       const opt = {
         margin: 10,
-        filename: `Perfil_Comportamental_${nome.replace(/\s+/g, '_')}.pdf`,
+        filename: `Perfil_Comportamental_${resultadoAtual.userName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: true
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
       
-      // Iniciar o processo de geração do PDF
-      html2pdf().from(tempDiv).set(opt).save().then(() => {
-        // Remover o elemento temporário após a geração do PDF
-        document.body.removeChild(tempDiv);
+      // Criar uma cópia do container para modificar sem afetar a visualização
+      const cloneContainer = resultadoContainer.cloneNode(true);
+      
+      // Remover elementos que não devem aparecer no PDF
+      const debugInfo = cloneContainer.querySelector("#debug-info");
+      if (debugInfo) debugInfo.remove();
+      
+      const buttons = cloneContainer.querySelectorAll("button");
+      buttons.forEach(button => button.remove());
+      
+      // Ajustar estilos para o PDF
+      cloneContainer.style.backgroundColor = "white";
+      cloneContainer.style.color = "black";
+      cloneContainer.style.padding = "20px";
+      
+      // Ajustar títulos e textos para cor preta
+      const titulos = cloneContainer.querySelectorAll("h3, h4");
+      titulos.forEach(titulo => {
+        titulo.style.color = "#333";
+      });
+      
+      // Ajustar a classe perfil-predominante para cor azul no PDF
+      const perfilPredominanteElements = cloneContainer.querySelectorAll(".perfil-predominante");
+      perfilPredominanteElements.forEach(el => {
+        el.style.color = "#007bff";
+      });
+      
+      // Ajustar o fundo do bloco de perfil detalhado
+      const perfilDetalhado = cloneContainer.querySelector(".perfil-detalhado");
+      if (perfilDetalhado) {
+        perfilDetalhado.style.backgroundColor = "#f8f9fa";
+        perfilDetalhado.style.color = "#333";
+      }
+      
+      // Adicionar um título ao PDF
+      const titulo = document.createElement("h1");
+      titulo.textContent = "Resultado do Teste de Perfil Comportamental";
+      titulo.style.textAlign = "center";
+      titulo.style.color = "#333";
+      titulo.style.marginBottom = "20px";
+      cloneContainer.insertBefore(titulo, cloneContainer.firstChild);
+      
+      // Adicionar rodapé
+      const footer = document.createElement("div");
+      footer.style.textAlign = "center";
+      footer.style.marginTop = "30px";
+      footer.style.fontSize = "12px";
+      footer.style.color = "#666";
+      
+      const dataAtual = new Date().toLocaleDateString();
+      footer.innerHTML = `<p>Teste realizado em ${dataAtual}</p>`;
+      cloneContainer.appendChild(footer);
+      
+      // Adicionar temporariamente ao documento para renderização
+      document.body.appendChild(cloneContainer);
+      cloneContainer.style.position = "absolute";
+      cloneContainer.style.left = "-9999px";
+      
+      // Gerar o PDF
+      html2pdf().from(cloneContainer).set(opt).save().then(() => {
+        // Remover o clone após a geração do PDF
+        document.body.removeChild(cloneContainer);
+      }).catch(err => {
+        console.error("Erro ao gerar PDF:", err);
+        alert("Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.");
+        document.body.removeChild(cloneContainer);
       });
     }
 
