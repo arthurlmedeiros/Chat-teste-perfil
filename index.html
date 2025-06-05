@@ -394,6 +394,7 @@
     let debugMode = false; // Desativado por padrão
     let resultadoAtual = null; // Para armazenar o resultado atual para o e-mail
     let graficoChart = null; // Para armazenar a instância do gráfico
+    let emailEnviado = false; // Flag para controlar o envio de e-mail
 
     // Informações detalhadas sobre cada perfil
     const perfilDetalhado = {
@@ -455,6 +456,9 @@
         alert("Por favor, insira seu e-mail.");
         return;
       }
+
+      // Resetar flag de e-mail enviado ao iniciar um novo teste
+      emailEnviado = false;
 
       // Preparar perguntas embaralhadas
       perguntas = embaralhar(perguntasBase).map((p, idx) => {
@@ -831,16 +835,21 @@
           });
           
           // Enviar resultado por e-mail automaticamente após o gráfico ser renderizado
+          // Apenas se o e-mail ainda não foi enviado
+          if (!emailEnviado) {
+            setTimeout(() => {
+              enviarResultadoPorEmail();
+            }, 1000);
+          }
+        }
+      } catch (e) {
+        console.log("Erro ao criar gráfico:", e);
+        // Mesmo com erro no gráfico, tentar enviar e-mail se ainda não foi enviado
+        if (!emailEnviado) {
           setTimeout(() => {
             enviarResultadoPorEmail();
           }, 1000);
         }
-      } catch (e) {
-        console.log("Erro ao criar gráfico:", e);
-        // Mesmo com erro no gráfico, tentar enviar e-mail
-        setTimeout(() => {
-          enviarResultadoPorEmail();
-        }, 1000);
       }
     }
 
@@ -893,11 +902,20 @@
 
     // Função para enviar o resultado por e-mail
     function enviarResultadoPorEmail() {
+      // Verificar se o e-mail já foi enviado para evitar duplicação
+      if (emailEnviado) {
+        console.log("E-mail já foi enviado anteriormente, ignorando solicitação duplicada.");
+        return;
+      }
+      
       // Verificar se temos resultados para enviar
       if (!resultadoAtual || !resultadoAtual.perfilPredominante) {
         mostrarStatusEmail("Não foi possível enviar o e-mail. Tente novamente mais tarde.", false);
         return;
       }
+      
+      // Marcar que o e-mail está sendo enviado
+      emailEnviado = true;
       
       // Mostrar mensagem de carregamento
       mostrarStatusEmail("Enviando resultado para seu e-mail...", null);
@@ -942,6 +960,9 @@
         
         // Mostrar notificação de erro
         mostrarStatusEmail("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", false);
+        
+        // Resetar flag para permitir nova tentativa
+        emailEnviado = false;
       });
     }
 
