@@ -836,20 +836,30 @@
           
           // Enviar resultado por e-mail automaticamente após o gráfico ser renderizado
           // Apenas se o e-mail ainda não foi enviado
-          if (!emailEnviado) {
-            setTimeout(() => {
-              enviarResultadoPorEmail();
+          if (
+            !emailEnviado &&
+            perfilPredominante &&
+            perfilPredominante.trim().toLowerCase() !== 'erro' &&
+            perfilPredominante.trim().toLowerCase() !== 'não definido'
+            ) {
+        setTimeout(() => {
+            enviarResultadoPorEmail();
             }, 1000);
-          }
+      }
         }
       } catch (e) {
         console.log("Erro ao criar gráfico:", e);
         // Mesmo com erro no gráfico, tentar enviar e-mail se ainda não foi enviado
-        if (!emailEnviado) {
-          setTimeout(() => {
-            enviarResultadoPorEmail();
-          }, 1000);
-        }
+        if (
+  !emailEnviado &&
+  perfilPredominante &&
+  perfilPredominante.trim().toLowerCase() !== 'erro' &&
+  perfilPredominante.trim().toLowerCase() !== 'não definido'
+) {
+  setTimeout(() => {
+    enviarResultadoPorEmail();
+  }, 1000);
+}
       }
     }
 
