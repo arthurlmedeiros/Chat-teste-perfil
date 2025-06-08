@@ -144,7 +144,6 @@
       <canvas id="graficoPerfil" width="300" height="300"></canvas>
     </div>
     
-    <!-- Novo bloco para informações detalhadas do perfil predominante -->
     <div id="perfil-detalhado" class="perfil-detalhado"></div>
     
     <div id="email-status" class="email-status hidden"></div>
@@ -390,12 +389,10 @@
     let respostas = {};
     let userName = "";
     let userEmail = "";
-    let perguntasEnviadas = [];
     let perguntaAtual = 0;
-    let debugMode = false; // Desativado por padrão
-    let resultadoAtual = null; // Para armazenar o resultado atual para o e-mail
-    let graficoChart = null; // Para armazenar a instância do gráfico
-    let emailEnviado = false; // Flag para controlar o envio de e-mail
+    let debugMode = false;
+    let resultadoAtual = null;
+    let graficoChart = null;
 
     // Informações detalhadas sobre cada perfil
     const perfilDetalhado = {
@@ -445,19 +442,17 @@
 
     // Função para iniciar o teste
     function startTest() {
-      userName = document.getElementById("name").value
-      userEmail = document.getElementById("email").value
+      userName = document.getElementById("name").value.trim();
+      userEmail = document.getElementById("email").value.trim();
 
-      if (!userName || !userEmail) {
-        alert("Por favor, preencha seu nome e e-mail para começar o teste.");
+      if (!userName) {
+        showNotification("Por favor, preencha seu nome para começar o teste.", "error");
         return;
       }
 
-      // Validação de e-mail simples
-      const emailRegex = /^[^
-@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userEmail)) {
-        alert("Por favor, insira um e-mail válido.");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!userEmail || !emailRegex.test(userEmail)) {
+        showNotification("Por favor, insira um e-mail válido para começar o teste.", "error");
         return;
       }
 
@@ -466,8 +461,7 @@
       perguntas = embaralhar(perguntasBase).slice(0, 10); // Seleciona 10 perguntas aleatórias
       perguntaAtual = 0;
       respostas = {};
-      perguntasEnviadas = [];
-      emailEnviado = false; // Reseta a flag de e-mail
+      resultadoAtual = null; // Zera o resultado atual no início de um novo teste
       renderQuestion();
     }
 
@@ -492,7 +486,7 @@
         questionContainer.appendChild(perguntaDiv);
 
         // Atualiza a barra de progresso
-        const progress = (perguntaAtual / perguntas.length) * 100;
+        const progress = ((perguntaAtual + 1) / perguntas.length) * 100; // +1 para progresso visual
         document.getElementById("progress").style.width = `${progress}%`;
       } else {
         showResultados();
@@ -505,11 +499,10 @@
       if (selectedOption) {
         const perfilSelecionado = selectedOption.value;
         respostas[perfilSelecionado] = (respostas[perfilSelecionado] || 0) + 1;
-        perguntasEnviadas.push(perguntas[perguntaAtual].texto); // Armazena a pergunta enviada
         perguntaAtual++;
         renderQuestion();
       } else {
-        alert("Por favor, selecione uma opção antes de prosseguir.");
+        showNotification("Por favor, selecione uma opção antes de prosseguir.", "error");
       }
     }
 
@@ -525,13 +518,32 @@
       const emailStatusDiv = document.getElementById("email-status");
 
       // Calcula o perfil predominante
-      let perfilPredominante = '';
-      let maxRespostas = 0;
+      let perfilPredominanteChave = '';
+      let maxRespostas = -1; // Inicializa com -1 para garantir que mesmo 0 respostas seja contabilizado
+      let perfisComMaxRespostas = [];
+
       for (const perfil in respostas) {
         if (respostas[perfil] > maxRespostas) {
           maxRespostas = respostas[perfil];
-          perfilPredominante = perfil;
+          perfisComMaxRespostas = [perfil]; // Novo máximo, reinicia a lista
+        } else if (respostas[perfil] === maxRespostas) {
+          perfisComMaxRespostas.push(perfil); // Empate, adiciona à lista
         }
+      }
+
+      // Se houver empate, decide um perfil predominante ou indica empate
+      if (perfisComMaxRespostas.length === 1) {
+        perfilPredominanteChave = perfisComMaxRespostas[0];
+      } else if (perfisComMaxRespostas.length > 1) {
+        // Se houver empate, pode-se escolher um critério de desempate
+        // Por enquanto, vamos pegar o primeiro perfil empatado como predominante
+        perfilPredominanteChave = perfisComMaxRespostas[0];
+        // Opcional: Adicionar uma mensagem indicando que houve um empate
+        showNotification("Houve um empate na pontuação entre perfis. O primeiro perfil empatado foi considerado predominante.", "info");
+      } else {
+        // Caso não haja respostas (teste não foi concluído corretamente), ou nenhum perfil pontuou
+        perfilPredominanteChave = 'Não Definido';
+        showNotification("Não foi possível determinar um perfil predominante. O teste pode estar incompleto.", "error");
       }
 
       // Mapeia perfis internos para nomes amigáveis
@@ -542,7 +554,7 @@
         organizado: 'Lobo'
       };
 
-      const nomePerfilPredominante = nomePerfis[perfilPredominante] || 'Não Definido';
+      const nomePerfilPredominante = nomePerfis[perfilPredominanteChave] || 'Não Definido';
       perfilTitulo.textContent = `Seu Perfil Predominante é: ${nomePerfilPredominante}`;
 
       perfilDetalhes.innerHTML = `
@@ -586,17 +598,21 @@
       // Renderiza o gráfico
       renderGrafico(respostas);
 
-      // Armazena o resultado atual para o e-mail
-      resultadoAtual = {
-        nome: userName,
-        email: userEmail,
-        perfilPredominante: nomePerfilPredominante,
-        respostas: { ...respostas }
-      };
-
-      // Envia o e-mail automaticamente se ainda não foi enviado
-      if (!emailEnviado) {
+      // Armazena o resultado atual para o e-mail APENAS SE TIVER UM PERFIL PREDOMINANTE VÁLIDO
+      if (nomePerfilPredominante !== 'Não Definido' && Object.keys(respostas).length > 0) {
+        resultadoAtual = {
+          nome: userName,
+          email: userEmail,
+          perfilPredominante: nomePerfilPredominante,
+          respostas: { ...respostas }
+        };
+        // Envia o e-mail automaticamente se o resultado for válido
         enviarEmailResultado();
+      } else {
+        emailStatusDiv.classList.add("error");
+        emailStatusDiv.textContent = "Não foi possível enviar o e-mail: Resultado do teste incompleto ou inválido.";
+        showNotification("Erro: O resultado do teste está incompleto ou inválido. O e-mail não será enviado.", "error");
+        updateDebugInfo("Não foi possível gerar resultado para envio de e-mail.");
       }
     }
 
@@ -645,7 +661,7 @@
                 }
               },
               suggestedMin: 0,
-              suggestedMax: perguntas.length / 4 + 1, // Ajusta o máximo para melhor visualização
+              suggestedMax: perguntas.length / 2, // Ajusta o máximo com base no número de perguntas para melhor visualização (pode ser ajustado)
               ticks: {
                 display: false // Oculta os números no eixo do radar
               }
@@ -679,23 +695,47 @@
       emailStatusDiv.className = "email-status"; // Reseta classes
       emailStatusDiv.textContent = "Enviando resultado por e-mail...";
 
-      // Validação para não enviar e-mail com resultados incompletos ou errados
+      // Validação final antes de enviar:
       if (!resultadoAtual || !resultadoAtual.nome || !resultadoAtual.email || !resultadoAtual.perfilPredominante || Object.keys(resultadoAtual.respostas).length === 0) {
         emailStatusDiv.classList.add("error");
         emailStatusDiv.textContent = "Erro: Dados do resultado incompletos ou inválidos. E-mail não enviado.";
         showNotification("Erro ao enviar e-mail: dados incompletos ou inválidos.", "error");
+        updateDebugInfo("Tentativa de envio de e-mail falhou: resultadoAtual é inválido.");
         return;
       }
+      
+      updateDebugInfo(`Iniciando envio de e-mail para: ${resultadoAtual.email}`);
 
       try {
         // Captura a tela do container de resultados como imagem
         const resultadoContainer = document.getElementById('resultado-container');
+        // Temporariamente oculta elementos que não devem aparecer na imagem, se houver
+        const restartButton = document.getElementById('restart-button');
+        restartButton.style.display = 'none'; // Oculta o botão de reiniciar para a captura
+        const emailStatus = document.getElementById('email-status');
+        emailStatus.style.display = 'none'; // Oculta o status do e-mail para a captura
+        const notificationArea = document.getElementById('notification-area');
+        notificationArea.style.display = 'none'; // Oculta a área de notificação
+        const debugInfo = document.getElementById('debug-info');
+        const debugInfoDisplay = debugInfo.style.display; // Salva o estado original
+        debugInfo.style.display = 'none'; // Oculta o debug info
+
         const canvas = await html2canvas(resultadoContainer, {
-          scale: 2, // Aumenta a escala para melhor qualidade da imagem
-          useCORS: true, // Importante se houver imagens de outras origens
-          logging: debugMode // Ativa o log do html2canvas se o debugMode estiver ativo
+          scale: 2,
+          useCORS: true,
+          logging: debugMode,
+          // Ignora o elemento de status de e-mail ao tirar o print
+          ignoreElements: (element) => element.id === 'email-status' || element.id === 'notification-area' || element.id === 'restart-button' || element.id === 'debug-info'
         });
+
+        // Restaura a visibilidade dos elementos
+        restartButton.style.display = ''; 
+        emailStatus.style.display = '';
+        notificationArea.style.display = '';
+        debugInfo.style.display = debugInfoDisplay; // Restaura o estado original do debug info
+
         const imageData = canvas.toDataURL('image/png');
+        updateDebugInfo("Imagem do resultado capturada com sucesso.");
 
         const response = await fetch('https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app', {
           method: 'POST',
@@ -715,7 +755,6 @@
               <p>Atenciosamente,</p>
               <p>Equipe Teste de Perfil Comportamental</p>
             `,
-            // Incluir o imageData diretamente no payload para o webhook
             imageData: imageData // Adiciona a imagem ao payload
           }),
         });
@@ -724,18 +763,20 @@
           emailStatusDiv.classList.add("success");
           emailStatusDiv.textContent = "Resultado enviado com sucesso para o seu e-mail!";
           showNotification("E-mail enviado com sucesso!", "success");
-          emailEnviado = true; // Marca que o e-mail foi enviado
+          updateDebugInfo("E-mail enviado com sucesso.");
         } else {
           const errorData = await response.json();
           emailStatusDiv.classList.add("error");
           emailStatusDiv.textContent = `Erro ao enviar e-mail: ${errorData.message || response.statusText}`;
           showNotification(`Erro ao enviar e-mail: ${errorData.message || response.statusText}`, "error");
+          updateDebugInfo(`Erro no servidor ao enviar e-mail: ${errorData.message || response.statusText}`);
         }
       } catch (error) {
         console.error("Erro ao enviar e-mail:", error);
         emailStatusDiv.classList.add("error");
         emailStatusDiv.textContent = `Erro ao enviar e-mail: ${error.message}`;
         showNotification(`Erro ao enviar e-mail: ${error.message}`, "error");
+        updateDebugInfo(`Erro inesperado ao enviar e-mail: ${error.message}`);
       }
     }
 
@@ -751,17 +792,18 @@
       if (graficoChart) {
         graficoChart.destroy(); // Destrói o gráfico ao reiniciar
       }
+      updateDebugInfo("Teste reiniciado.");
     });
 
     // Adiciona a biblioteca Chart.js
     const scriptChartJs = document.createElement('script');
     scriptChartJs.src = 'https://cdn.jsdelivr.net/npm/chart.js';
     scriptChartJs.onload = () => {
-      // Opcional: Adicionar plugins ou configurações globais do Chart.js aqui
+      updateDebugInfo("Chart.js carregado.");
     };
     document.head.appendChild(scriptChartJs);
 
-    // Debug mode toggle (para uso interno, pode ser removido em produção)
+    // Debug mode toggle
     document.addEventListener('keydown', (e) => {
       if (e.key === 'd' && e.ctrlKey) { // Ctrl + D para alternar debug mode
         debugMode = !debugMode;
@@ -784,7 +826,6 @@
         debugInfo.scrollTop = debugInfo.scrollHeight; // Rolagem automática
       }
     }
-
   </script>
 </body>
 </html>
