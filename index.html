@@ -444,45 +444,46 @@
 
     // Função para iniciar o teste
     function startTest() {
-      userName = document.getElementById("name").value.trim();
-      userEmail = document.getElementById("email").value.trim();
+      userName = document.getElementById("name").value;
+      userEmail = document.getElementById("email").value;
       
-      if (!userName) {
-        alert("Por favor, insira seu nome.");
+      if (!userName || !userEmail) {
+        alert("Por favor, preencha seu nome e e-mail para começar.");
         return;
       }
       
-      if (!userEmail) {
-        alert("Por favor, insira seu e-mail.");
-        return;
-      }
-
-      // Resetar flag de e-mail enviado ao iniciar um novo teste
+      // Resetar flag de e-mail enviado ao iniciar novo teste
       emailEnviado = false;
-
-      // Preparar perguntas embaralhadas
-      perguntas = embaralhar(perguntasBase).map((p, idx) => {
-        const opcoes = embaralhar(p.opcoes);
-        const perfilPorLetra = {};
-        const letras = ["a", "b", "c", "d"];
-        
-        opcoes.forEach((op, i) => {
-          op.letra = letras[i];
-          perfilPorLetra[letras[i]] = op.perfil;
-        });
-
-        perguntasEnviadas.push({ id: idx, perfilPorLetra });
-        return { id: idx, texto: p.texto, opcoes };
-      });
-
-      // Esconder elementos de introdução
-      document.getElementById("intro-container").classList.add("hidden");
       
-      // Mostrar quiz
+      // Esconder intro e mostrar quiz
+      document.getElementById("intro-container").classList.add("hidden");
       document.getElementById("quiz").classList.remove("hidden");
+      
+      // Preparar perguntas
+      perguntas = [...perguntasBase];
+      
+      // Embaralhar perguntas
+      perguntas = embaralhar(perguntas);
+      
+      // Embaralhar opções de cada pergunta
+      perguntas.forEach(p => {
+        p.opcoes = embaralhar(p.opcoes);
+        
+        // Adicionar letra a cada opção (A, B, C, D)
+        const letras = ["A", "B", "C", "D"];
+        p.opcoes.forEach((op, i) => {
+          op.letra = letras[i];
+        });
+      });
+      
+      // Iniciar com a primeira pergunta
       perguntaAtual = 0;
-      atualizarProgressBar();
+      respostas = {};
+      perguntasEnviadas = [];
+      
+      // Mostrar primeira pergunta
       mostrarPergunta(perguntaAtual);
+      atualizarProgressBar();
     }
 
     // Função para atualizar a barra de progresso
@@ -491,13 +492,14 @@
       document.getElementById("progress").style.width = `${progresso}%`;
     }
 
-    // Função para mostrar uma pergunta
+    // Função para mostrar pergunta atual
     function mostrarPergunta(i) {
+      // Se chegou ao final, enviar respostas
       if (i >= perguntas.length) {
         enviarResultados();
         return;
       }
-
+      
       const p = perguntas[i];
       let html = `<p><strong>${i + 1}/${perguntas.length}. ${p.texto}</strong></p>`;
       
@@ -834,9 +836,9 @@
             }
           });
           
-          // Enviar resultado por e-mail automaticamente após o gráfico ser renderizado
-          // Apenas se o e-mail ainda não foi enviado
-          if (!emailEnviado) {
+          // Verificar se deve enviar e-mail automaticamente
+          // Apenas se o e-mail ainda não foi enviado E o perfil não for "Erro" E não tiver todos os percentuais zerados
+          if (!emailEnviado && perfilPredominante !== "Erro" && !todosPercentuaisZerados(percentuais)) {
             setTimeout(() => {
               enviarResultadoPorEmail();
             }, 1000);
@@ -845,12 +847,18 @@
       } catch (e) {
         console.log("Erro ao criar gráfico:", e);
         // Mesmo com erro no gráfico, tentar enviar e-mail se ainda não foi enviado
-        if (!emailEnviado) {
+        // E se o perfil não for "Erro" E não tiver todos os percentuais zerados
+        if (!emailEnviado && perfilPredominante !== "Erro" && !todosPercentuaisZerados(percentuais)) {
           setTimeout(() => {
             enviarResultadoPorEmail();
           }, 1000);
         }
       }
+    }
+
+    // Função para verificar se todos os percentuais são zero
+    function todosPercentuaisZerados(percentuais) {
+      return Object.values(percentuais).every(valor => valor === 0);
     }
 
     // Função para exibir informações detalhadas do perfil predominante
@@ -900,104 +908,122 @@
       perfilDetalhadoContainer.innerHTML = html;
     }
 
-    // Função para enviar o resultado por e-mail
+    // Função para enviar resultado por e-mail
     function enviarResultadoPorEmail() {
-      // Verificar se o e-mail já foi enviado para evitar duplicação
+      // Se o e-mail já foi enviado, não enviar novamente
       if (emailEnviado) {
-        console.log("E-mail já foi enviado anteriormente, ignorando solicitação duplicada.");
         return;
       }
       
-      // Verificar se temos resultados para enviar
-      if (!resultadoAtual || !resultadoAtual.perfilPredominante) {
-        mostrarStatusEmail("Não foi possível enviar o e-mail. Tente novamente mais tarde.", false);
+      // Se não temos resultado ou o perfil é "Erro" ou todos os percentuais são zero, não enviar e-mail
+      if (!resultadoAtual || resultadoAtual.perfilPredominante === "Erro" || todosPercentuaisZerados(resultadoAtual.percentuais)) {
+        console.log("Não enviando e-mail: resultado inválido ou perfil é 'Erro' ou todos percentuais são zero");
         return;
       }
       
-      // Marcar que o e-mail está sendo enviado
-      emailEnviado = true;
+      // Mostrar status de envio
+      const emailStatus = document.getElementById("email-status");
+      emailStatus.classList.remove("hidden", "success", "error");
+      emailStatus.textContent = "Enviando resultado para seu e-mail...";
       
-      // Mostrar mensagem de carregamento
-      mostrarStatusEmail("Enviando resultado para seu e-mail...", null);
-      
-      // Preparar dados para envio
       // Capturar a imagem do gráfico se disponível
-      let graficoImgBase64 = null;
+      let graficoBase64 = null;
       try {
         if (graficoChart) {
-          const canvas = document.getElementById("graficoPerfil");
-          graficoImgBase64 = canvas.toDataURL("image/png");
+          graficoBase64 = document.getElementById("graficoPerfil").toDataURL("image/png");
         }
       } catch (e) {
         console.error("Erro ao capturar imagem do gráfico:", e);
       }
       
-      // Preparar dados para envio ao n8n
-      const dadosEmail = {
+      // Preparar dados do perfil detalhado
+      const perfilInfo = perfilDetalhado[resultadoAtual.perfilPredominante];
+      
+      // Capturar o conteúdo HTML atual da tela de resultados
+      const perfilTitulo = document.getElementById("perfil-titulo").innerHTML;
+      const perfilDetalhes = document.getElementById("perfil-detalhes").innerHTML;
+      const perfilDetalhadoHTML = document.getElementById("perfil-detalhado").innerHTML;
+      
+      // Criar uma cópia do conteúdo da tela para o e-mail
+      const emailContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;">
+          <h2 style="text-align: center;">Teste de Perfil Comportamental</h2>
+          <div>${perfilTitulo}</div>
+          <div>${perfilDetalhes}</div>
+          ${graficoBase64 ? `<div style="text-align: center; margin: 20px 0;"><img src="${graficoBase64}" alt="Gráfico de Perfil" style="max-width: 100%; height: auto;"></div>` : ''}
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 30px;">
+            ${perfilDetalhadoHTML}
+          </div>
+          <p style="text-align: center; margin-top: 30px; font-size: 12px; color: #6c757d;">Este e-mail foi enviado automaticamente. Por favor, não responda.</p>
+        </div>
+      `;
+      
+      // Preparar dados para envio
+      const dadosEnvio = {
         userName: resultadoAtual.userName,
         userEmail: resultadoAtual.userEmail || userEmail,
         perfilPredominante: resultadoAtual.perfilPredominante,
         resultadoOrdenado: resultadoAtual.resultadoOrdenado,
         percentuais: resultadoAtual.percentuais,
-        graficoBase64: graficoImgBase64,
-        perfilDetalhado: perfilDetalhado[resultadoAtual.perfilPredominante],
-        acao: "enviar_email" // Indicar ao n8n que deve enviar e-mail
+        graficoBase64: graficoBase64,
+        perfilDetalhado: perfilInfo,
+        emailHTML: emailContent,
+        acao: "enviar_email"
       };
       
-      // Enviar para o mesmo endpoint do n8n, mas com a ação específica
+      // Enviar para o mesmo webhook
       fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dadosEmail)
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dadosEnvio)
       })
-      .then(res => res.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Erro ao enviar e-mail");
+        }
+        return response.json();
+      })
       .then(data => {
-        // Mostrar notificação de sucesso
-        mostrarStatusEmail(`Resultado enviado com sucesso para ${userEmail}!`, true);
+        // Marcar e-mail como enviado
+        emailEnviado = true;
+        
+        // Mostrar confirmação
+        emailStatus.classList.add("success");
+        emailStatus.textContent = `Resultado enviado com sucesso para ${userEmail}!`;
       })
       .catch(err => {
         console.error("Erro ao enviar e-mail:", err);
-        
-        // Mostrar notificação de erro
-        mostrarStatusEmail("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", false);
-        
-        // Resetar flag para permitir nova tentativa
-        emailEnviado = false;
+        emailStatus.classList.add("error");
+        emailStatus.textContent = "Erro ao enviar e-mail. Por favor, tente novamente.";
       });
     }
 
-    // Função para mostrar status do envio de e-mail
-    function mostrarStatusEmail(mensagem, sucesso) {
-      const emailStatus = document.getElementById("email-status");
-      emailStatus.classList.remove("hidden", "success", "error");
-      
-      if (sucesso === true) {
-        emailStatus.classList.add("success");
-      } else if (sucesso === false) {
-        emailStatus.classList.add("error");
-      }
-      
-      emailStatus.textContent = mensagem;
-    }
-
-    // Função para enviar resultados
+    // Função para enviar respostas para o webhook
     function enviarResultados() {
-      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
+      // Preparar dados para envio
+      const dadosEnvio = {
+        userName: userName,
+        userEmail: userEmail,
+        respostas: respostas
+      };
       
+      // Enviar para o webhook
       fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userName, 
-          userAnswers: respostas, 
-          lastUserMessage: perguntasEnviadas,  // Renomeado para corresponder ao que o backend espera
-          userEmail  // Movido para ser o último campo
-        })
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dadosEnvio)
       })
-      .then(res => res.text())  // Importante: usar text() em vez de json()
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Erro na resposta do servidor");
+        }
+        return response.text();
+      })
       .then(rawData => {
-        console.log("Resposta do servidor (texto bruto):", rawData);
-        
         // Chamar função para exibir resultados com o texto bruto
         exibirResultados(rawData);
       })
