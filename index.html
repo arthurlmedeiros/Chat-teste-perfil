@@ -530,73 +530,110 @@
     }
 
     // Função para extrair informações da resposta
-    function extrairInformacoesResposta(rawData) {
-      // Ativar modo de debug para mostrar informações
-      if (debugMode) {
-        document.getElementById("debug-info").style.display = "block";
-        document.getElementById("debug-info").textContent = "Dados recebidos: " + rawData;
+function extrairInformacoesResposta(rawData) {
+  if (debugMode) {
+    document.getElementById("debug-info").style.display = "block";
+    document.getElementById("debug-info").textContent = "Dados recebidos: " + rawData;
+  }
+
+  // Resultado padrão
+  const resultadoPadrao = {
+    userName: userName,
+    userEmail: userEmail,
+    resultadoOrdenado: [],
+    percentuais: {
+      "Águia": 0,
+      "Gato": 0,
+      "Lobo": 0,
+      "Tubarão": 0
+    },
+    perfilPredominante: ""
+  };
+
+  try {
+    let parsed = rawData;
+
+    // Caso venha uma string JSON, tenta converter
+    if (typeof parsed === 'string') {
+      // Remove aspas externas, se houver
+      if (parsed.startsWith('"') && parsed.endsWith('"')) {
+        parsed = parsed.slice(1, -1);
       }
-      
-      // Criar objeto de resultado padrão (caso o parsing falhe)
-      const resultadoPadrao = {
-        userName: userName,
-        userEmail: userEmail,
-        resultadoOrdenado: [],
-        percentuais: {
-          "Águia": 0,
-          "Gato": 0,
-          "Lobo": 0,
-          "Tubarão": 0
-        },
-        perfilPredominante: ""
-      };
-      
+      // Desescapa
+      parsed = parsed.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      // Tenta transformar em objeto
       try {
-        // Pré-processamento para remover camadas de escape
-        let processedData = rawData;
-        
-        // Primeiro, remover aspas externas se existirem
-        if (processedData.startsWith('"') && processedData.endsWith('"')) {
-          processedData = processedData.slice(1, -1);
-          if (debugMode) {
-            document.getElementById("debug-info").textContent += "\n\nRemovidas aspas externas";
-          }
-        }
-        
-        // Desescapar barras invertidas e aspas
-        processedData = processedData.replace(/\\\\/g, '\\');
-        processedData = processedData.replace(/\\"/g, '"');
-        
-        // Normalizar quebras de linha
-        processedData = processedData.replace(/\\n/g, ' ');
-        
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados pré-processados: " + processedData;
-        }
-        
-        // Extrair diretamente os valores importantes usando regex
-        // Buscar userName em qualquer parte da string (primeira ocorrência)
-        const userNameMatch = processedData.match(/userName"?\s*:\s*"([^"]+)"/);
-        
-        // Buscar perfilPredominante em qualquer parte da string (primeira ocorrência)
-        const perfilPredominanteMatch = processedData.match(/perfilPredominante"?\s*:\s*"([^"]+)"/);
-        
-        // Buscar resultadoOrdenado em qualquer parte da string (primeira ocorrência)
-        const resultadoOrdenadoMatch = processedData.match(/resultadoOrdenado"?\s*:\s*"([^"]+)"/);
-        
-        // Se não encontrou nenhum dos campos essenciais, retornar dados insuficientes
-        if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
-          if (debugMode) {
-            document.getElementById("debug-info").textContent += "\n\nDados insuficientes: Não foi possível encontrar campos essenciais.";
-            if (!userNameMatch) document.getElementById("debug-info").textContent += "\n- userName não encontrado";
-            if (!perfilPredominanteMatch) document.getElementById("debug-info").textContent += "\n- perfilPredominante não encontrado";
-            if (!resultadoOrdenadoMatch) document.getElementById("debug-info").textContent += "\n- resultadoOrdenado não encontrado";
-          }
-          return {
-            output: resultadoPadrao,
-            temDadosSuficientes: false
-          };
-        }
+        parsed = JSON.parse(parsed);
+      } catch (e) {
+        // ainda não é JSON, segue para regex
+      }
+    }
+
+    // Se é objeto, pega os campos direto
+    if (typeof parsed === 'object' && parsed !== null) {
+      const perfilPredominante = parsed.perfilPredominante || parsed.resultado?.perfilPredominante || "";
+      const resultadoOrdenado = parsed.resultadoOrdenado || parsed.resultado?.resultadoOrdenado || [];
+      return {
+        output: {
+          userName: parsed.userName || userName,
+          userEmail: parsed.userEmail || userEmail,
+          resultadoOrdenado: resultadoOrdenado,
+          percentuais: parsed.percentuais || {},
+          perfilPredominante: perfilPredominante
+        },
+        temDadosSuficientes: !!perfilPredominante && resultadoOrdenado.length > 0
+      };
+    }
+
+    // Se ainda for string, tenta regex (como seu código original)
+    let processedData = String(rawData);
+
+    const userNameMatch = processedData.match(/userName"?\s*:\s*"([^"]+)"/);
+    const perfilPredominanteMatch = processedData.match(/perfilPredominante"?\s*:\s*"([^"]+)"/);
+    const resultadoOrdenadoMatch = processedData.match(/resultadoOrdenado"?\s*:\s*"([^"]+)"/);
+
+    if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
+      return {
+        output: resultadoPadrao,
+        temDadosSuficientes: false
+      };
+    }
+
+    const extractedUserName = userNameMatch[1];
+    const extractedPerfilPredominante = perfilPredominanteMatch[1];
+    const resultadoOrdenadoStr = resultadoOrdenadoMatch[1];
+    const extractedResultadoOrdenado = resultadoOrdenadoStr.split(',').map(item => item.trim());
+
+    let extractedPercentuais = {};
+    extractedResultadoOrdenado.forEach(item => {
+      const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
+      if (match) {
+        const perfil = match[1].trim();
+        const percentual = parseInt(match[2], 10);
+        extractedPercentuais[perfil] = percentual;
+      }
+    });
+
+    return {
+      output: {
+        userName: extractedUserName,
+        userEmail: userEmail,
+        resultadoOrdenado: extractedResultadoOrdenado,
+        percentuais: extractedPercentuais,
+        perfilPredominante: extractedPerfilPredominante
+      },
+      temDadosSuficientes: !!extractedPerfilPredominante && extractedResultadoOrdenado.length > 0
+    };
+  } catch (e) {
+    if (debugMode) {
+      document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
+    }
+    return {
+      output: resultadoPadrao,
+      temDadosSuficientes: false
+    };
+  }
+}
         
         const extractedUserName = userNameMatch[1];
         const extractedPerfilPredominante = perfilPredominanteMatch[1];
@@ -836,30 +873,20 @@
           
           // Enviar resultado por e-mail automaticamente após o gráfico ser renderizado
           // Apenas se o e-mail ainda não foi enviado
-          if (
-            !emailEnviado &&
-            perfilPredominante &&
-            perfilPredominante.trim().toLowerCase() !== 'erro' &&
-            perfilPredominante.trim().toLowerCase() !== 'não definido'
-            ) {
-        setTimeout(() => {
-            enviarResultadoPorEmail();
+          if (!emailEnviado) {
+            setTimeout(() => {
+              enviarResultadoPorEmail();
             }, 1000);
-      }
+          }
         }
       } catch (e) {
         console.log("Erro ao criar gráfico:", e);
         // Mesmo com erro no gráfico, tentar enviar e-mail se ainda não foi enviado
-        if (
-  !emailEnviado &&
-  perfilPredominante &&
-  perfilPredominante.trim().toLowerCase() !== 'erro' &&
-  perfilPredominante.trim().toLowerCase() !== 'não definido'
-) {
-  setTimeout(() => {
-    enviarResultadoPorEmail();
-  }, 1000);
-}
+        if (!emailEnviado) {
+          setTimeout(() => {
+            enviarResultadoPorEmail();
+          }, 1000);
+        }
       }
     }
 
@@ -911,20 +938,27 @@
     }
 
     // Função para enviar o resultado por e-mail
-function enviarResultadoPorEmail() {
+    function enviarResultadoPorEmail() {
   // Verificar se o e-mail já foi enviado para evitar duplicação
   if (emailEnviado) {
     console.log("E-mail já foi enviado anteriormente, ignorando solicitação duplicada.");
     return;
   }
-  // Não envie e-mail se o resultado for 'Erro' ou 'Não Definido'
+
+  // Checagem robusta para não enviar e-mail quando o resultado for inválido
   if (
     !resultadoAtual ||
     !resultadoAtual.perfilPredominante ||
+    typeof resultadoAtual.perfilPredominante !== 'string' ||
+    resultadoAtual.perfilPredominante.trim() === '' ||
     resultadoAtual.perfilPredominante.trim().toLowerCase() === 'erro' ||
-    resultadoAtual.perfilPredominante.trim().toLowerCase() === 'não definido'
+    resultadoAtual.perfilPredominante.trim().toLowerCase() === 'não definido' ||
+    !resultadoAtual.userEmail || // importante: e-mail vazio também não envia!
+    resultadoAtual.resultadoOrdenado == null || // null ou undefined
+    resultadoAtual.resultadoOrdenado.length === 0 // array vazio
   ) {
-    mostrarStatusEmail("Não foi possível enviar o e-mail. Tente novamente mais tarde.", false);
+    // Não envie o e-mail nem faça fetch
+    console.log("Envio de e-mail bloqueado devido a resultado inválido.");
     return;
   }
 
@@ -935,7 +969,6 @@ function enviarResultadoPorEmail() {
   mostrarStatusEmail("Enviando resultado para seu e-mail...", null);
 
   // Preparar dados para envio
-  // Capturar a imagem do gráfico se disponível
   let graficoImgBase64 = null;
   try {
     if (graficoChart) {
@@ -946,7 +979,6 @@ function enviarResultadoPorEmail() {
     console.error("Erro ao capturar imagem do gráfico:", e);
   }
 
-  // Preparar dados para envio ao n8n
   const dadosEmail = {
     userName: resultadoAtual.userName,
     userEmail: resultadoAtual.userEmail || userEmail,
@@ -955,10 +987,10 @@ function enviarResultadoPorEmail() {
     percentuais: resultadoAtual.percentuais,
     graficoBase64: graficoImgBase64,
     perfilDetalhado: perfilDetalhado[resultadoAtual.perfilPredominante],
-    acao: "enviar_email" // Indicar ao n8n que deve enviar e-mail
+    acao: "enviar_email"
   };
 
-  // Enviar para o mesmo endpoint do n8n, mas com a ação específica
+  // Enviar para o endpoint do n8n
   fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -966,16 +998,11 @@ function enviarResultadoPorEmail() {
   })
   .then(res => res.text())
   .then(data => {
-    // Mostrar notificação de sucesso
-    mostrarStatusEmail(`Resultado enviado com sucesso para ${userEmail}!`, true);
+    mostrarStatusEmail(`Resultado enviado com sucesso para ${resultadoAtual.userEmail || userEmail}!`, true);
   })
   .catch(err => {
     console.error("Erro ao enviar e-mail:", err);
-
-    // Mostrar notificação de erro
     mostrarStatusEmail("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", false);
-
-    // Resetar flag para permitir nova tentativa
     emailEnviado = false;
   });
 }
