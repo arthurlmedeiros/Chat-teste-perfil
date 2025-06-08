@@ -901,7 +901,7 @@
     }
 
     // Função para enviar o resultado por e-mail
-    function enviarResultadoPorEmail() {
+function enviarResultadoPorEmail() {
   // Verificar se o e-mail já foi enviado para evitar duplicação
   if (emailEnviado) {
     console.log("E-mail já foi enviado anteriormente, ignorando solicitação duplicada.");
@@ -911,8 +911,8 @@
   if (
     !resultadoAtual ||
     !resultadoAtual.perfilPredominante ||
-    resultadoAtual.perfilPredominante.toLowerCase() === 'erro' ||
-    resultadoAtual.perfilPredominante.toLowerCase() === 'não definido'
+    resultadoAtual.perfilPredominante.trim().toLowerCase() === 'erro' ||
+    resultadoAtual.perfilPredominante.trim().toLowerCase() === 'não definido'
   ) {
     mostrarStatusEmail("Não foi possível enviar o e-mail. Tente novamente mais tarde.", false);
     return;
@@ -945,10 +945,10 @@
     percentuais: resultadoAtual.percentuais,
     graficoBase64: graficoImgBase64,
     perfilDetalhado: perfilDetalhado[resultadoAtual.perfilPredominante],
-    acao: "enviar_email"
+    acao: "enviar_email" // Indicar ao n8n que deve enviar e-mail
   };
 
-  // Enviar para o endpoint do n8n
+  // Enviar para o mesmo endpoint do n8n, mas com a ação específica
   fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -961,8 +961,10 @@
   })
   .catch(err => {
     console.error("Erro ao enviar e-mail:", err);
+
     // Mostrar notificação de erro
     mostrarStatusEmail("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", false);
+
     // Resetar flag para permitir nova tentativa
     emailEnviado = false;
   });
