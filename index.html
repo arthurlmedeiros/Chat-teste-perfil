@@ -443,47 +443,48 @@
     }
 
     // Função para iniciar o teste
-    function startTest() {
-      userName = document.getElementById("name").value.trim();
-      userEmail = document.getElementById("email").value.trim();
-      
-      if (!userName) {
-        alert("Por favor, insira seu nome.");
-        return;
-      }
-      
-      if (!userEmail) {
-        alert("Por favor, insira seu e-mail.");
-        return;
-      }
+function startTest() {
+  userName = document.getElementById("name").value.trim();
+  userEmail = document.getElementById("email").value.trim();
 
-      // Resetar flag de e-mail enviado ao iniciar um novo teste
-      emailEnviado = false;
+  if (!userName) {
+    alert("Por favor, insira seu nome.");
+    return;
+  }
 
-      // Preparar perguntas embaralhadas
-      perguntas = embaralhar(perguntasBase).map((p, idx) => {
-        const opcoes = embaralhar(p.opcoes);
-        const perfilPorLetra = {};
-        const letras = ["a", "b", "c", "d"];
-        
-        opcoes.forEach((op, i) => {
-          op.letra = letras[i];
-          perfilPorLetra[letras[i]] = op.perfil;
-        });
+  if (!userEmail) {
+    alert("Por favor, insira seu e-mail.");
+    return;
+  }
 
-        perguntasEnviadas.push({ id: idx, perfilPorLetra });
-        return { id: idx, texto: p.texto, opcoes };
-      });
+  // ✅ Limpar variáveis globais antes de iniciar novo teste
+  respostas = {};
+  perguntas = [];
+  perguntasEnviadas = [];
+  perguntaAtual = 0;
+  resultadoAtual = null;
+  emailEnviado = false;
 
-      // Esconder elementos de introdução
-      document.getElementById("intro-container").classList.add("hidden");
-      
-      // Mostrar quiz
-      document.getElementById("quiz").classList.remove("hidden");
-      perguntaAtual = 0;
-      atualizarProgressBar();
-      mostrarPergunta(perguntaAtual);
-    }
+  // Preparar perguntas embaralhadas
+  perguntas = embaralhar(perguntasBase).map((p, idx) => {
+    const opcoes = embaralhar(p.opcoes);
+    const perfilPorLetra = {};
+    const letras = ["a", "b", "c", "d"];
+
+    opcoes.forEach((op, i) => {
+      op.letra = letras[i];
+      perfilPorLetra[letras[i]] = op.perfil;
+    });
+
+    perguntasEnviadas.push({ id: idx, perfilPorLetra });
+    return { id: idx, texto: p.texto, opcoes };
+  });
+
+  document.getElementById("intro-container").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  atualizarProgressBar();
+  mostrarPergunta(perguntaAtual);
+}
 
     // Função para atualizar a barra de progresso
     function atualizarProgressBar() {
