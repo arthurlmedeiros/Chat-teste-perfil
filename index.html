@@ -28,6 +28,10 @@
     button:hover {
       background-color: #0056b3;
     }
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
     .hidden { display: none; }
     label {
       display: block;
@@ -36,6 +40,14 @@
     }
     input[type="radio"] {
       margin-right: 8px;
+    }
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #333;
+      background-color: #222;
+      color: #fff;
+      border-radius: 4px;
     }
     .progress-bar {
       height: 10px;
@@ -86,6 +98,11 @@
       background-color: rgba(220, 53, 69, 0.2);
       border: 1px solid #dc3545;
     }
+    .warning {
+      background-color: rgba(255, 193, 7, 0.2);
+      border: 1px solid #ffc107;
+      color: #212529;
+    }
     .perfil-detalhado {
       margin-top: 30px;
       background-color: rgba(255, 255, 255, 0.1);
@@ -110,11 +127,28 @@
       margin: 5px 0;
       line-height: 1.5;
     }
-    .notification {
-      padding: 10px;
-      border-radius: 4px;
-      margin: 10px 0;
+    .loading {
       text-align: center;
+      padding: 20px;
+    }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #007bff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .validation-error {
+      color: #dc3545;
+      font-size: 0.9em;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -123,9 +157,13 @@
   
   <div id="intro-container">
     <label for="name">Digite seu nome completo para começar:</label><br>
-    <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name" /><br>
+    <input type="text" id="name" placeholder="Seu nome aqui" autocomplete="name" required /><br>
+    <div id="name-error" class="validation-error hidden">Por favor, insira seu nome completo.</div>
+    
     <label for="email">Digite seu e-mail:</label><br>
-    <input type="text" id="email" placeholder="Seu e-mail aqui" autocomplete="email" /><br>
+    <input type="email" id="email" placeholder="Seu e-mail aqui" autocomplete="email" required /><br>
+    <div id="email-error" class="validation-error hidden">Por favor, insira um e-mail válido.</div>
+    
     <button id="start-button">Começar</button>
   </div>
 
@@ -143,7 +181,6 @@
       <canvas id="graficoPerfil" width="300" height="300"></canvas>
     </div>
     
-    <!-- Novo bloco para informações detalhadas do perfil predominante -->
     <div id="perfil-detalhado" class="perfil-detalhado"></div>
     
     <div id="email-status" class="email-status hidden"></div>
@@ -151,12 +188,19 @@
     <div class="container" style="margin-top: 20px;">
       <button id="restart-button">Refazer Teste</button>
     </div>
-    <div id="notification-area"></div>
     <div id="debug-info"></div>
   </div>
   
   <script>
-    // Array completo com as 25 perguntas novas
+    // Configurações e constantes
+    const CONFIG = {
+      WEBHOOK_URL: "https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app",
+      MAX_RETRIES: 3,
+      RETRY_DELAY: 2000,
+      EMAIL_SEND_DELAY: 1000
+    };
+
+    // Array completo com as 25 perguntas
     const perguntasBase = [
       {
         texto: "Eu sou...",
@@ -385,16 +429,18 @@
       }
     ];
     
+    // Variáveis globais
     let perguntas = [];
     let respostas = {};
     let userName = "";
     let userEmail = "";
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
-    let debugMode = false; // Desativado por padrão
-    let resultadoAtual = null; // Para armazenar o resultado atual para o e-mail
-    let graficoChart = null; // Para armazenar a instância do gráfico
-    let emailEnviado = false; // Flag para controlar o envio de e-mail
+    let debugMode = false;
+    let resultadoAtual = null;
+    let graficoChart = null;
+    let emailEnviado = false;
+    let tentativasEnvio = 0;
 
     // Informações detalhadas sobre cada perfil
     const perfilDetalhado = {
@@ -432,251 +478,222 @@
       }
     };
 
-    // Função para embaralhar arrays
-    function embaralhar(array) {
-      const novoArray = [...array];
-      for (let i = novoArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [novoArray[i], novoArray[j]] = [novoArray[j], novoArray[i]];
-      }
-      return novoArray;
-    }
+    // Utilitários
+    const Utils = {
+      // Função para embaralhar arrays
+      embaralhar(array) {
+        const novoArray = [...array];
+        for (let i = novoArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [novoArray[i], novoArray[j]] = [novoArray[j], novoArray[i]];
+        }
+        return novoArray;
+      },
 
-    // Função para iniciar o teste
-function startTest() {
-  userName = document.getElementById("name").value.trim();
-  userEmail = document.getElementById("email").value.trim();
+      // Validação de e-mail
+      validarEmail(email) {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
+      },
 
-  if (!userName) {
-    alert("Por favor, insira seu nome.");
-    return;
-  }
+      // Validação de nome
+      validarNome(nome) {
+        return nome && nome.trim().length >= 2;
+      },
 
-  if (!userEmail) {
-    alert("Por favor, insira seu e-mail.");
-    return;
-  }
-
-  // ✅ Resetar todas as variáveis antes de iniciar o teste
-  respostas = {};
-  perguntas = [];
-  perguntasEnviadas = [];
-  perguntaAtual = 0;
-  resultadoAtual = null;
-  emailEnviado = false;
-
-  // Preparar perguntas embaralhadas e mapear letras
-  perguntas = embaralhar(perguntasBase).map((p, idx) => {
-    const opcoes = embaralhar(p.opcoes);
-    const perfilPorLetra = {};
-    const letras = ["a", "b", "c", "d"];
-
-    opcoes.forEach((op, i) => {
-      op.letra = letras[i];
-      perfilPorLetra[letras[i]] = op.perfil;
-    });
-
-    perguntasEnviadas.push({ id: idx, perfilPorLetra });
-    return { id: idx, texto: p.texto, opcoes };
-  });
-
-  // Ocultar introdução e mostrar quiz
-  document.getElementById("intro-container").classList.add("hidden");
-  document.getElementById("quiz").classList.remove("hidden");
-
-  atualizarProgressBar();
-  mostrarPergunta(perguntaAtual);
-}
-
-    // Função para atualizar a barra de progresso
-    function atualizarProgressBar() {
-      const progresso = (perguntaAtual / perguntas.length) * 100;
-      document.getElementById("progress").style.width = `${progresso}%`;
-    }
-
-    // Função para mostrar uma pergunta
-    function mostrarPergunta(i) {
-      if (i >= perguntas.length) {
-        enviarResultados();
-        return;
-      }
-
-      const p = perguntas[i];
-      let html = `<p><strong>${i + 1}/${perguntas.length}. ${p.texto}</strong></p>`;
-      
-      p.opcoes.forEach(op => {
-        html += `<label><input type="radio" name="resposta" value="${op.letra}" /> ${op.letra}) ${op.texto}</label>`;
-      });
-      
-      html += `<div class="container" style="margin-top: 15px;"><button id="next-button">Próxima</button></div>`;
-      
-      document.getElementById("question-container").innerHTML = html;
-      
-      // Adicionar evento ao botão
-      document.getElementById("next-button").addEventListener("click", function() {
-        registrarResposta(i);
-      });
-    }
-
-    // Função para registrar resposta
-    function registrarResposta(i) {
-      const selecionada = document.querySelector("input[name='resposta']:checked");
-      if (!selecionada) {
-        alert("Por favor, selecione uma resposta.");
-        return;
-      }
-
-      respostas[i] = selecionada.value;
-      perguntaAtual++;
-      atualizarProgressBar();
-      mostrarPergunta(perguntaAtual);
-    }
-
-    // Função para extrair informações da resposta
-function extrairInformacoesResposta(rawData) {
-  if (debugMode) {
-    document.getElementById("debug-info").style.display = "block";
-    document.getElementById("debug-info").textContent = "Dados recebidos: " + rawData;
-  }
-
-  // Resultado padrão
-  const resultadoPadrao = {
-    userName: userName,
-    userEmail: userEmail,
-    resultadoOrdenado: [],
-    percentuais: {
-      "Águia": 0,
-      "Gato": 0,
-      "Lobo": 0,
-      "Tubarão": 0
-    },
-    perfilPredominante: ""
-  };
-
-  try {
-    let parsed = rawData;
-
-    // Caso venha uma string JSON, tenta converter
-    if (typeof parsed === 'string') {
-      // Remove aspas externas, se houver
-      if (parsed.startsWith('"') && parsed.endsWith('"')) {
-        parsed = parsed.slice(1, -1);
-      }
-      // Desescapa
-      parsed = parsed.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-      // Tenta transformar em objeto
-      try {
-        parsed = JSON.parse(parsed);
-      } catch (e) {
-        // ainda não é JSON, segue para regex
-      }
-    }
-
-    // Se é objeto, pega os campos direto
-    if (typeof parsed === 'object' && parsed !== null) {
-      const perfilPredominante = parsed.perfilPredominante || parsed.resultado?.perfilPredominante || "";
-      const resultadoOrdenado = parsed.resultadoOrdenado || parsed.resultado?.resultadoOrdenado || [];
-      return {
-        output: {
-          userName: parsed.userName || userName,
-          userEmail: parsed.userEmail || userEmail,
-          resultadoOrdenado: resultadoOrdenado,
-          percentuais: parsed.percentuais || {},
-          perfilPredominante: perfilPredominante
-        },
-        temDadosSuficientes: !!perfilPredominante && resultadoOrdenado.length > 0
-      };
-    }
-
-    // Se ainda for string, tenta regex (como fallback)
-    let processedData = String(rawData);
-
-    const userNameMatch = processedData.match(/userName"?\s*:\s*"([^"]+)"/);
-    const perfilPredominanteMatch = processedData.match(/perfilPredominante"?\s*:\s*"([^"]+)"/);
-    const resultadoOrdenadoMatch = processedData.match(/resultadoOrdenado"?\s*:\s*"([^"]+)"/);
-
-    if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
-      return {
-        output: resultadoPadrao,
-        temDadosSuficientes: false
-      };
-    }
-
-    const extractedUserName = userNameMatch[1];
-    const extractedPerfilPredominante = perfilPredominanteMatch[1];
-    const resultadoOrdenadoStr = resultadoOrdenadoMatch[1];
-    const extractedResultadoOrdenado = resultadoOrdenadoStr.split(',').map(item => item.trim());
-
-    let extractedPercentuais = {};
-    extractedResultadoOrdenado.forEach(item => {
-      const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
-      if (match) {
-        const perfil = match[1].trim();
-        const percentual = parseInt(match[2], 10);
-        extractedPercentuais[perfil] = percentual;
-      }
-    });
-
-    if (debugMode) {
-      document.getElementById("debug-info").textContent += "\n\nResultadoOrdenado extraído: " + resultadoOrdenadoStr;
-      document.getElementById("debug-info").textContent += "\n\nPercentuais extraídos: " + JSON.stringify(extractedPercentuais);
-    }
-
-    const temDadosSuficientes = extractedPerfilPredominante && Object.keys(extractedPercentuais).length > 0;
-
-    if (debugMode) {
-      document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + 
-        JSON.stringify({
-          userName: extractedUserName,
-          perfilPredominante: extractedPerfilPredominante,
-          resultadoOrdenado: extractedResultadoOrdenado,
-          percentuais: extractedPercentuais,
-          temDadosSuficientes: temDadosSuficientes
-        }, null, 2);
-    }
-
-
-
-    const extractedUserName = userNameMatch[1];
-    const extractedPerfilPredominante = perfilPredominanteMatch[1];
-    const resultadoOrdenadoStr = resultadoOrdenadoMatch[1];
-    const extractedResultadoOrdenado = resultadoOrdenadoStr.split(',').map(item => item.trim());
-
-    let extractedPercentuais = {};
-    extractedResultadoOrdenado.forEach(item => {
-      const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
-      if (match) {
-        const perfil = match[1].trim();
-        const percentual = parseInt(match[2], 10);
-        extractedPercentuais[perfil] = percentual;
-      }
-    });
-
-
-    return {
-      output: resultadoPadrao,
-      temDadosSuficientes: false
-    };
-  }
-}
-        
-        const extractedUserName = userNameMatch[1];
-        const extractedPerfilPredominante = perfilPredominanteMatch[1];
-        
-        // Processar resultadoOrdenado para extrair os perfis e percentuais
-        const resultadoOrdenadoStr = resultadoOrdenadoMatch[1];
-        
+      // Função para debug
+      debug(mensagem, dados = null) {
         if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nResultadoOrdenado extraído: " + resultadoOrdenadoStr;
+          const debugInfo = document.getElementById("debug-info");
+          debugInfo.style.display = "block";
+          debugInfo.textContent += `\n[${new Date().toLocaleTimeString()}] ${mensagem}`;
+          if (dados) {
+            debugInfo.textContent += `\nDados: ${JSON.stringify(dados, null, 2)}`;
+          }
+        }
+        console.log(`[DEBUG] ${mensagem}`, dados);
+      },
+
+      // Função para delay
+      delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+    };
+
+    // Validação de formulário
+    const Validation = {
+      showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.textContent = message;
+        errorElement.classList.remove('hidden');
+      },
+
+      hideError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.classList.add('hidden');
+      },
+
+      validateForm() {
+        let isValid = true;
+        
+        // Validar nome
+        const nome = document.getElementById("name").value.trim();
+        if (!Utils.validarNome(nome)) {
+          this.showError('name-error', 'Por favor, insira seu nome completo (mínimo 2 caracteres).');
+          isValid = false;
+        } else {
+          this.hideError('name-error');
+        }
+
+        // Validar e-mail
+        const email = document.getElementById("email").value.trim();
+        if (!Utils.validarEmail(email)) {
+          this.showError('email-error', 'Por favor, insira um e-mail válido.');
+          isValid = false;
+        } else {
+          this.hideError('email-error');
+        }
+
+        return isValid;
+      }
+    };
+
+    // Gerenciador de estado da aplicação
+    const AppState = {
+      reset() {
+        respostas = {};
+        perguntas = [];
+        perguntasEnviadas = [];
+        perguntaAtual = 0;
+        resultadoAtual = null;
+        emailEnviado = false;
+        tentativasEnvio = 0;
+        
+        if (graficoChart) {
+          graficoChart.destroy();
+          graficoChart = null;
+        }
+      },
+
+      initializeQuestions() {
+        perguntas = Utils.embaralhar(perguntasBase).map((p, idx) => {
+          const opcoes = Utils.embaralhar(p.opcoes);
+          const perfilPorLetra = {};
+          const letras = ["a", "b", "c", "d"];
+
+          opcoes.forEach((op, i) => {
+            op.letra = letras[i];
+            perfilPorLetra[letras[i]] = op.perfil;
+          });
+
+          perguntasEnviadas.push({ id: idx, perfilPorLetra });
+          return { id: idx, texto: p.texto, opcoes };
+        });
+      }
+    };
+
+    // Gerenciador de UI
+    const UI = {
+      showSection(sectionId) {
+        document.querySelectorAll('.hidden').forEach(el => {
+          if (el.id !== sectionId) el.classList.add('hidden');
+        });
+        document.getElementById(sectionId).classList.remove('hidden');
+      },
+
+      updateProgressBar() {
+        const progresso = (perguntaAtual / perguntas.length) * 100;
+        document.getElementById("progress").style.width = `${progresso}%`;
+      },
+
+      showLoadingMessage(message) {
+        document.getElementById("question-container").innerHTML = `<div class="loading">${message}</div>`;
+      },
+
+      showStatusMessage(elementId, message, type = null) {
+        const element = document.getElementById(elementId);
+        element.classList.remove("hidden", "success", "error", "warning");
+        
+        if (type) {
+          element.classList.add(type);
         }
         
-        // Dividir a string por vírgulas e limpar espaços
+        element.textContent = message;
+      }
+    };
+
+    // Processador de respostas do webhook
+    const ResponseProcessor = {
+      extractResponseData(rawData) {
+        Utils.debug("Processando resposta do servidor", rawData);
+
+        const defaultResult = {
+          userName: userName,
+          userEmail: userEmail,
+          resultadoOrdenado: [],
+          percentuais: { "Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0 },
+          perfilPredominante: ""
+        };
+
+        try {
+          let parsed = rawData;
+
+          // Tentar converter string JSON para objeto
+          if (typeof parsed === 'string') {
+            if (parsed.startsWith('"') && parsed.endsWith('"')) {
+              parsed = parsed.slice(1, -1);
+            }
+            parsed = parsed.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+            
+            try {
+              parsed = JSON.parse(parsed);
+            } catch (e) {
+              Utils.debug("Falha ao converter JSON, usando regex", e);
+            }
+          }
+
+          // Se conseguiu converter para objeto
+          if (typeof parsed === 'object' && parsed !== null) {
+            const perfilPredominante = parsed.perfilPredominante || parsed.resultado?.perfilPredominante || "";
+            const resultadoOrdenado = parsed.resultadoOrdenado || parsed.resultado?.resultadoOrdenado || [];
+            
+            return {
+              output: {
+                userName: parsed.userName || userName,
+                userEmail: parsed.userEmail || userEmail,
+                resultadoOrdenado: resultadoOrdenado,
+                percentuais: parsed.percentuais || {},
+                perfilPredominante: perfilPredominante
+              },
+              isValid: !!perfilPredominante && resultadoOrdenado.length > 0
+            };
+          }
+
+          // Fallback para regex se não conseguiu converter
+          return this.extractWithRegex(String(rawData), defaultResult);
+
+        } catch (error) {
+          Utils.debug("Erro ao processar resposta", error);
+          return { output: defaultResult, isValid: false };
+        }
+      },
+
+      extractWithRegex(processedData, defaultResult) {
+        const userNameMatch = processedData.match(/userName"?\s*:\s*"([^"]+)"/);
+        const perfilPredominanteMatch = processedData.match(/perfilPredominante"?\s*:\s*"([^"]+)"/);
+        const resultadoOrdenadoMatch = processedData.match(/resultadoOrdenado"?\s*:\s*"([^"]+)"/);
+
+        if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
+          return { output: defaultResult, isValid: false };
+        }
+
+        const extractedUserName = userNameMatch[1];
+        const extractedPerfilPredominante = perfilPredominanteMatch[1];
+        const resultadoOrdenadoStr = resultadoOrdenadoMatch[1];
         const extractedResultadoOrdenado = resultadoOrdenadoStr.split(',').map(item => item.trim());
-        
-        // Extrair percentuais do resultadoOrdenado
+
         let extractedPercentuais = {};
         extractedResultadoOrdenado.forEach(item => {
-          // Regex para extrair perfil e percentual
           const match = item.match(/([^\(]+)\s*\((\d+)%\)/);
           if (match) {
             const perfil = match[1].trim();
@@ -684,424 +701,414 @@ function extrairInformacoesResposta(rawData) {
             extractedPercentuais[perfil] = percentual;
           }
         });
-        
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nPercentuais extraídos: " + JSON.stringify(extractedPercentuais);
-        }
-        
-        // Verificar se temos dados suficientes
-        const temDadosSuficientes = 
-          extractedPerfilPredominante && 
-          Object.keys(extractedPercentuais).length > 0;
-        
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados extraídos: " + 
-            JSON.stringify({
-              userName: extractedUserName,
-              perfilPredominante: extractedPerfilPredominante,
-              resultadoOrdenado: extractedResultadoOrdenado,
-              percentuais: extractedPercentuais,
-              temDadosSuficientes: temDadosSuficientes
-            }, null, 2);
-        }
-        
+
         return {
           output: {
             userName: extractedUserName,
-            userEmail: userEmail, // Usar o e-mail fornecido pelo usuário
+            userEmail: userEmail,
             resultadoOrdenado: extractedResultadoOrdenado,
             percentuais: extractedPercentuais,
             perfilPredominante: extractedPerfilPredominante
           },
-          temDadosSuficientes: temDadosSuficientes
-        };
-      } catch (e) {
-        console.error("Erro ao extrair informações:", e);
-        if (debugMode) {
-          document.getElementById("debug-info").style.display = "block";
-          document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
-          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(rawData);
-        }
-        
-        // Retornar resultado padrão com flag de dados insuficientes
-        return {
-          output: resultadoPadrao,
-          temDadosSuficientes: false
+          isValid: !!extractedPerfilPredominante && Object.keys(extractedPercentuais).length > 0
         };
       }
-    }
+    };
 
-    // Função para exibir os resultados na tela
-    function exibirResultados(data) {
-      // Esconder o quiz
-      document.getElementById("quiz").classList.add("hidden");
-      
-      // Mostrar o container de resultados
-      const resultadoContainer = document.getElementById("resultado-container");
-      resultadoContainer.classList.remove("hidden");
-      
-      // Extrair informações da resposta
-      const { output, temDadosSuficientes } = extrairInformacoesResposta(data);
-      
-      // Armazenar o resultado para uso posterior (e-mail)
-      resultadoAtual = output;
-      
-      // Verificar se temos dados válidos
-      if (!temDadosSuficientes) {
-        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
-        document.getElementById("perfil-detalhes").innerHTML = "<p>Não foi possível obter seu perfil comportamental. Por favor, tente novamente.</p>";
+    // Gerenciador de webhook
+    const WebhookManager = {
+      async sendResults() {
+        UI.showLoadingMessage("Calculando seu perfil... aguarde um instante.");
         
-        // Mostrar dados brutos em modo de debug
-        if (debugMode) {
-          document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(data);
-        }
-        return;
-      }
-      
-      // Extrair dados do resultado
-      const nome = output.userName || userName;
-      const perfilPredominante = output.perfilPredominante;
-      const resultadoOrdenado = output.resultadoOrdenado || [];
-      const percentuais = output.percentuais || {};
-      
-      // Descrições dos perfis
-      const descricoesPerfis = {
-        'Águia': {
-          titulo: 'Idealista',
-          descricao: 'Você é criativo, inovador e visionário. Gosta de explorar novas possibilidades e tem facilidade para inspirar os outros com suas ideias. Valoriza a liberdade e a expressão pessoal.'
-        },
-        'Tubarão': {
-          titulo: 'Focado',
-          descricao: 'Você é determinado, direto e orientado a resultados. Gosta de desafios e tem facilidade para tomar decisões rápidas. Valoriza eficiência e produtividade acima de tudo.'
-        },
-        'Gato': {
-          titulo: 'Afetivo',
-          descricao: 'Você é empático, harmonioso e cooperativo. Gosta de trabalhar em equipe e tem facilidade para construir relacionamentos. Valoriza a estabilidade e o bem-estar de todos.'
-        },
-        'Lobo': {
-          titulo: 'Organizado',
-          descricao: 'Você é metódico, detalhista e analítico. Gosta de processos bem definidos e tem facilidade para identificar falhas e melhorias. Valoriza precisão e qualidade.'
-        }
-      };
-      
-      // Exibir título com perfil predominante
-      document.getElementById("perfil-titulo").innerHTML = `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
-      
-      // Exibir detalhes dos perfis
-      let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
-      
-      // Adicionar cada perfil como um item formatado
-      resultadoOrdenado.forEach((perfil, index) => {
-        const posicao = index === 0 ? "Predominante" : 
-                       index === 1 ? "Segundo" : 
-                       index === 2 ? "Terceiro" : "Último";
-        
-        detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
-      });
-      
-      detalhesHTML += "<p>Obrigado por participar do teste!</p>";
-      document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
-      
-      // Exibir informações detalhadas do perfil predominante
-      exibirPerfilDetalhado(perfilPredominante);
-      
-      // Adicionar evento ao botão de reiniciar
-      document.getElementById("restart-button").addEventListener("click", function() {
-        location.reload();
-      });
-      
-      // Tentar criar o gráfico se Chart.js estiver disponível
-      try {
-        // Definir a ordem padrão dos perfis para o gráfico
-        const perfilOrdem = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
-        
-        // Preparar os dados na ordem correta
-        const labels = perfilOrdem;
-        const values = perfilOrdem.map(perfil => percentuais[perfil] || 0);
-        
-        // Encontrar o valor mínimo entre os percentuais (para ajustar a escala)
-        const minValue = Math.min(...Object.values(percentuais));
-        
-        if (typeof Chart !== 'undefined' && labels.length > 0 && values.length > 0) {
-          const ctx = document.getElementById("graficoPerfil").getContext("2d");
-          
-          // Cores para cada perfil
-          const cores = {
-            'Águia': '#3498db',    // Azul
-            'Tubarão': '#e74c3c',  // Vermelho
-            'Gato': '#2ecc71',     // Verde
-            'Lobo': '#f39c12'      // Laranja
-          };
-          
-          // Obter cores na mesma ordem dos labels
-          const backgroundColors = labels.map(label => cores[label] || '#999');
-          
-          // Calcular o valor mínimo para a escala
-          // Se o valor mínimo for maior que 0, usamos um valor ligeiramente menor
-          // para que o ponto mínimo não fique no centro do gráfico
-          const scaleMin = minValue > 0 ? Math.max(0, minValue - 5) : 0;
-          
-          graficoChart = new Chart(ctx, {
-            type: "radar",
-            data: {
-              labels: labels.map(label => `${label} (${descricoesPerfis[label].titulo})`),
-              datasets: [{
-                label: 'Seu Perfil',
-                data: values,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgb(54, 162, 235)',
-                pointBackgroundColor: backgroundColors,
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: backgroundColors
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              scales: {
-                r: {
-                  angleLines: {
-                    color: 'rgba(255, 255, 255, 0.3)'
-                  },
-                  grid: {
-                    color: 'rgba(255, 255, 255, 0.3)'
-                  },
-                  pointLabels: {
-                    color: '#fff'
-                  },
-                  ticks: {
-                    color: '#fff',
-                    backdropColor: 'rgba(0, 0, 0, 0.7)',
-                    beginAtZero: false,  // Importante: não começar em zero se o valor mínimo for maior
-                    min: scaleMin,       // Definir o valor mínimo da escala
-                    max: 100,
-                    stepSize: 10
-                  }
-                }
-              },
-              plugins: {
-                legend: { 
-                  position: "bottom",
-                  labels: {
-                    color: '#fff'
-                  }
-                },
-                title: { 
-                  display: true, 
-                  text: "Distribuição de Perfil Comportamental",
-                  color: "#ffffff"
-                }
-              }
-            }
+        const payload = {
+          userName,
+          userAnswers: respostas,
+          lastUserMessage: perguntasEnviadas,
+          userEmail
+        };
+
+        Utils.debug("Enviando dados para webhook", payload);
+
+        try {
+          const response = await fetch(CONFIG.WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
           });
-          
-          // Enviar resultado por e-mail automaticamente após o gráfico ser renderizado
-          // Apenas se o e-mail ainda não foi enviado
-          if (!emailEnviado) {
-            setTimeout(() => {
-              enviarResultadoPorEmail();
-            }, 1000);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
+
+          const rawData = await response.text();
+          Utils.debug("Resposta recebida do webhook", rawData);
+          
+          ResultsManager.displayResults(rawData);
+          
+        } catch (error) {
+          Utils.debug("Erro no webhook", error);
+          this.handleWebhookError(error);
         }
-      } catch (e) {
-        console.log("Erro ao criar gráfico:", e);
-        // Mesmo com erro no gráfico, tentar enviar e-mail se ainda não foi enviado
-        if (!emailEnviado) {
-          setTimeout(() => {
-            enviarResultadoPorEmail();
-          }, 1000);
-        }
-      }
-    }
+      },
 
-    // Função para exibir informações detalhadas do perfil predominante
-    function exibirPerfilDetalhado(perfilPredominante) {
-      const perfilDetalhadoContainer = document.getElementById("perfil-detalhado");
-      const infoPerfil = perfilDetalhado[perfilPredominante];
-      
-      if (!infoPerfil) {
-        perfilDetalhadoContainer.style.display = "none";
-        return;
-      }
-      
-      let html = `
-        <h3>Seu Perfil ${perfilPredominante} em Detalhes</h3>
-        
-        <div class="perfil-secao">
-          <h4>Características Principais</h4>
-          <p>${infoPerfil.caracteristicas}</p>
-        </div>
-        
-        <div class="perfil-secao">
-          <h4>Traços Comportamentais</h4>
-          <p>${infoPerfil.tracos}</p>
-        </div>
-        
-        <div class="perfil-secao">
-          <h4>Pontos Fortes</h4>
-          <p>${infoPerfil.pontosFortesTexto}</p>
-        </div>
-        
-        <div class="perfil-secao">
-          <h4>Pontos de Melhoria</h4>
-          <p>${infoPerfil.pontosMelhoriaTexto}</p>
-        </div>
-        
-        <div class="perfil-secao">
-          <h4>Motivações</h4>
-          <p>${infoPerfil.motivacoesTexto}</p>
-        </div>
-        
-        <div class="perfil-secao">
-          <h4>Valores</h4>
-          <p>${infoPerfil.valoresTexto}</p>
-        </div>
-      `;
-      
-      perfilDetalhadoContainer.innerHTML = html;
-    }
-
-    // Função para enviar o resultado por e-mail
-    function enviarResultadoPorEmail() {
-  // Verificar se o e-mail já foi enviado para evitar duplicação
-  if (emailEnviado) {
-    console.log("E-mail já foi enviado anteriormente, ignorando solicitação duplicada.");
-    return;
-  }
-
-  // Checagem robusta para não enviar e-mail quando o resultado for inválido
-  if (
-    !resultadoAtual ||
-    !resultadoAtual.perfilPredominante ||
-    typeof resultadoAtual.perfilPredominante !== 'string' ||
-    resultadoAtual.perfilPredominante.trim() === '' ||
-    resultadoAtual.perfilPredominante.trim().toLowerCase() === 'erro' ||
-    resultadoAtual.perfilPredominante.trim().toLowerCase() === 'não definido' ||
-    !resultadoAtual.userEmail || // importante: e-mail vazio também não envia!
-    resultadoAtual.resultadoOrdenado == null || // null ou undefined
-    resultadoAtual.resultadoOrdenado.length === 0 // array vazio
-  ) {
-    // Não envie o e-mail nem faça fetch
-    console.log("Envio de e-mail bloqueado devido a resultado inválido.");
-    return;
-  }
-
-  // Marcar que o e-mail está sendo enviado
-  emailEnviado = true;
-
-  // Mostrar mensagem de carregamento
-  mostrarStatusEmail("Enviando resultado para seu e-mail...", null);
-
-  // Preparar dados para envio
-  let graficoImgBase64 = null;
-  try {
-    if (graficoChart) {
-      const canvas = document.getElementById("graficoPerfil");
-      graficoImgBase64 = canvas.toDataURL("image/png");
-    }
-  } catch (e) {
-    console.error("Erro ao capturar imagem do gráfico:", e);
-  }
-
-  const dadosEmail = {
-    userName: resultadoAtual.userName,
-    userEmail: resultadoAtual.userEmail || userEmail,
-    perfilPredominante: resultadoAtual.perfilPredominante,
-    resultadoOrdenado: resultadoAtual.resultadoOrdenado,
-    percentuais: resultadoAtual.percentuais,
-    graficoBase64: graficoImgBase64,
-    perfilDetalhado: perfilDetalhado[resultadoAtual.perfilPredominante],
-    acao: "enviar_email"
-  };
-
-  // Enviar para o endpoint do n8n
-  fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(dadosEmail)
-  })
-  .then(res => res.text())
-  .then(data => {
-    mostrarStatusEmail(`Resultado enviado com sucesso para ${resultadoAtual.userEmail || userEmail}!`, true);
-  })
-  .catch(err => {
-    console.error("Erro ao enviar e-mail:", err);
-    mostrarStatusEmail("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", false);
-    emailEnviado = false;
-  });
-}
-
-    // Função para mostrar status do envio de e-mail
-    function mostrarStatusEmail(mensagem, sucesso) {
-      const emailStatus = document.getElementById("email-status");
-      emailStatus.classList.remove("hidden", "success", "error");
-      
-      if (sucesso === true) {
-        emailStatus.classList.add("success");
-      } else if (sucesso === false) {
-        emailStatus.classList.add("error");
-      }
-      
-      emailStatus.textContent = mensagem;
-    }
-
-    // Função para enviar resultados
-    function enviarResultados() {
-      document.getElementById("question-container").innerHTML = "<p>Calculando seu perfil... aguarde um instante.</p>";
-      
-      fetch("https://primary-kh0f-zuper.up.railway.app/webhook/chat-teste-perfil-production.up.railway.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userName, 
-          userAnswers: respostas, 
-          lastUserMessage: perguntasEnviadas,  // Renomeado para corresponder ao que o backend espera
-          userEmail  // Movido para ser o último campo
-        })
-      })
-      .then(res => res.text())  // Importante: usar text() em vez de json()
-      .then(rawData => {
-        console.log("Resposta do servidor (texto bruto):", rawData);
-        
-        // Chamar função para exibir resultados com o texto bruto
-        exibirResultados(rawData);
-      })
-      .catch(err => {
+      handleWebhookError(error) {
         document.getElementById("quiz").classList.add("hidden");
         document.getElementById("resultado-container").classList.remove("hidden");
         document.getElementById("perfil-titulo").textContent = "Erro de conexão";
+        
+        let errorMessage = "Ocorreu um erro ao processar seu teste.";
+        if (tentativasEnvio < CONFIG.MAX_RETRIES) {
+          errorMessage += " Tentando novamente...";
+          setTimeout(() => {
+            tentativasEnvio++;
+            this.sendResults();
+          }, CONFIG.RETRY_DELAY);
+        } else {
+          errorMessage += " Por favor, tente novamente mais tarde.";
+        }
+        
         document.getElementById("perfil-detalhes").innerHTML = `
-          <p>Ocorreu um erro ao processar seu teste. Por favor, tente novamente.</p>
+          <p>${errorMessage}</p>
           <div class="container" style="margin-top: 15px;">
             <button id="retry-button">Tentar Novamente</button>
           </div>
         `;
         
-        document.getElementById("retry-button").addEventListener("click", function() {
+        document.getElementById("retry-button")?.addEventListener("click", () => {
+          tentativasEnvio = 0;
           document.getElementById("resultado-container").classList.add("hidden");
           document.getElementById("quiz").classList.remove("hidden");
-          enviarResultados();
+          this.sendResults();
+        });
+      }
+    };
+
+    // Gerenciador de resultados
+    const ResultsManager = {
+      displayResults(rawData) {
+        document.getElementById("quiz").classList.add("hidden");
+        document.getElementById("resultado-container").classList.remove("hidden");
+        
+        const { output, isValid } = ResponseProcessor.extractResponseData(rawData);
+        resultadoAtual = output;
+        
+        if (!isValid) {
+          this.showError("Não foi possível obter seu perfil comportamental. Por favor, tente novamente.");
+          return;
+        }
+        
+        this.renderResults(output);
+        this.createChart(output.percentuais);
+        this.showDetailedProfile(output.perfilPredominante);
+        
+        // Configurar botão de reiniciar
+        document.getElementById("restart-button").addEventListener("click", () => {
+          location.reload();
         });
         
-        console.error("Erro:", err);
-      });
-    }
+        // Enviar e-mail após renderizar
+        setTimeout(() => {
+          EmailManager.sendResultEmail();
+        }, CONFIG.EMAIL_SEND_DELAY);
+      },
 
-    // Adicionar evento ao botão de início quando o DOM estiver carregado
+      showError(message) {
+        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
+        document.getElementById("perfil-detalhes").innerHTML = `<p>${message}</p>`;
+      },
+
+      renderResults(data) {
+        const { userName: nome, perfilPredominante, resultadoOrdenado } = data;
+        
+        document.getElementById("perfil-titulo").innerHTML = 
+          `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
+        
+        let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
+        
+        resultadoOrdenado.forEach((perfil, index) => {
+          const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
+          const posicao = posicoes[index] || `${index + 1}º`;
+          detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
+        });
+        
+        detalhesHTML += "<p>Obrigado por participar do teste!</p>";
+        document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
+      },
+
+      createChart(percentuais) {
+        if (typeof Chart === 'undefined') {
+          Utils.debug("Chart.js não disponível");
+          return;
+        }
+
+        const perfilOrdem = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
+        const labels = perfilOrdem;
+        const values = perfilOrdem.map(perfil => percentuais[perfil] || 0);
+        const minValue = Math.min(...Object.values(percentuais));
+        
+        const ctx = document.getElementById("graficoPerfil").getContext("2d");
+        
+        const cores = {
+          'Águia': '#3498db',
+          'Tubarão': '#e74c3c',
+          'Gato': '#2ecc71',
+          'Lobo': '#f39c12'
+        };
+        
+        const backgroundColors = labels.map(label => cores[label] || '#999');
+        const scaleMin = minValue > 0 ? Math.max(0, minValue - 5) : 0;
+        
+        graficoChart = new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels: labels.map(label => `${label}`),
+            datasets: [{
+              label: 'Seu Perfil',
+              data: values,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgb(54, 162, 235)',
+              pointBackgroundColor: backgroundColors,
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: backgroundColors
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              r: {
+                angleLines: { color: 'rgba(255, 255, 255, 0.3)' },
+                grid: { color: 'rgba(255, 255, 255, 0.3)' },
+                pointLabels: { color: '#fff' },
+                ticks: {
+                  color: '#fff',
+                  backdropColor: 'rgba(0, 0, 0, 0.7)',
+                  beginAtZero: false,
+                  min: scaleMin,
+                  max: 100,
+                  stepSize: 10
+                }
+              }
+            },
+            plugins: {
+              legend: { 
+                position: "bottom",
+                labels: { color: '#fff' }
+              },
+              title: { 
+                display: true, 
+                text: "Distribuição de Perfil Comportamental",
+                color: "#ffffff"
+              }
+            }
+          }
+        });
+      },
+
+      showDetailedProfile(perfilPredominante) {
+        const container = document.getElementById("perfil-detalhado");
+        const info = perfilDetalhado[perfilPredominante];
+        
+        if (!info) {
+          container.style.display = "none";
+          return;
+        }
+        
+        container.innerHTML = `
+          <h3>Seu Perfil ${perfilPredominante} em Detalhes</h3>
+          <div class="perfil-secao">
+            <h4>Características Principais</h4>
+            <p>${info.caracteristicas}</p>
+          </div>
+          <div class="perfil-secao">
+            <h4>Traços Comportamentais</h4>
+            <p>${info.tracos}</p>
+          </div>
+          <div class="perfil-secao">
+            <h4>Pontos Fortes</h4>
+            <p>${info.pontosFortesTexto}</p>
+          </div>
+          <div class="perfil-secao">
+            <h4>Pontos de Melhoria</h4>
+            <p>${info.pontosMelhoriaTexto}</p>
+          </div>
+          <div class="perfil-secao">
+            <h4>Motivações</h4>
+            <p>${info.motivacoesTexto}</p>
+          </div>
+          <div class="perfil-secao">
+            <h4>Valores</h4>
+            <p>${info.valoresTexto}</p>
+          </div>
+        `;
+      }
+    };
+
+    // Gerenciador de e-mail
+    const EmailManager = {
+      async sendResultEmail() {
+        if (emailEnviado || !this.isValidResult()) {
+          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
+          return;
+        }
+
+        emailEnviado = true;
+        UI.showStatusMessage("email-status", "Enviando resultado para seu e-mail...", null);
+
+        try {
+          const emailData = this.prepareEmailData();
+          
+          const response = await fetch(CONFIG.WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(emailData)
+          });
+
+          if (response.ok) {
+            UI.showStatusMessage("email-status", 
+              `Resultado enviado com sucesso para ${resultadoAtual.userEmail}!`, "success");
+          } else {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+        } catch (error) {
+          Utils.debug("Erro ao enviar e-mail", error);
+          UI.showStatusMessage("email-status", 
+            "Erro ao enviar e-mail. Por favor, tente novamente mais tarde.", "error");
+          emailEnviado = false;
+        }
+      },
+
+      isValidResult() {
+        return resultadoAtual &&
+               resultadoAtual.perfilPredominante &&
+               typeof resultadoAtual.perfilPredominante === 'string' &&
+               resultadoAtual.perfilPredominante.trim() !== '' &&
+               !['erro', 'não definido'].includes(resultadoAtual.perfilPredominante.toLowerCase()) &&
+               resultadoAtual.userEmail &&
+               resultadoAtual.resultadoOrdenado &&
+               resultadoAtual.resultadoOrdenado.length > 0;
+      },
+
+      prepareEmailData() {
+        let graficoImgBase64 = null;
+        
+        try {
+          if (graficoChart) {
+            const canvas = document.getElementById("graficoPerfil");
+            graficoImgBase64 = canvas.toDataURL("image/png");
+          }
+        } catch (error) {
+          Utils.debug("Erro ao capturar gráfico", error);
+        }
+
+        return {
+          userName: resultadoAtual.userName,
+          userEmail: resultadoAtual.userEmail,
+          perfilPredominante: resultadoAtual.perfilPredominante,
+          resultadoOrdenado: resultadoAtual.resultadoOrdenado,
+          percentuais: resultadoAtual.percentuais,
+          graficoBase64: graficoImgBase64,
+          perfilDetalhado: perfilDetalhado[resultadoAtual.perfilPredominante],
+          acao: "enviar_email"
+        };
+      }
+    };
+
+    // Gerenciador de quiz
+    const QuizManager = {
+      start() {
+        if (!Validation.validateForm()) {
+          return;
+        }
+
+        userName = document.getElementById("name").value.trim();
+        userEmail = document.getElementById("email").value.trim();
+
+        AppState.reset();
+        AppState.initializeQuestions();
+
+        document.getElementById("intro-container").classList.add("hidden");
+        document.getElementById("quiz").classList.remove("hidden");
+
+        UI.updateProgressBar();
+        this.showQuestion(perguntaAtual);
+      },
+
+      showQuestion(index) {
+        if (index >= perguntas.length) {
+          WebhookManager.sendResults();
+          return;
+        }
+
+        const pergunta = perguntas[index];
+        let html = `<p><strong>${index + 1}/${perguntas.length}. ${pergunta.texto}</strong></p>`;
+        
+        pergunta.opcoes.forEach(opcao => {
+          html += `<label><input type="radio" name="resposta" value="${opcao.letra}" /> ${opcao.letra}) ${opcao.texto}</label>`;
+        });
+        
+        html += `<div class="container" style="margin-top: 15px;"><button id="next-button">Próxima</button></div>`;
+        
+        document.getElementById("question-container").innerHTML = html;
+        
+        document.getElementById("next-button").addEventListener("click", () => {
+          this.registerAnswer(index);
+        });
+      },
+
+      registerAnswer(index) {
+        const selected = document.querySelector("input[name='resposta']:checked");
+        if (!selected) {
+          alert("Por favor, selecione uma resposta.");
+          return;
+        }
+
+        respostas[index] = selected.value;
+        perguntaAtual++;
+        UI.updateProgressBar();
+        this.showQuestion(perguntaAtual);
+      }
+    };
+
+    // Inicialização da aplicação
     document.addEventListener("DOMContentLoaded", function() {
-      document.getElementById("start-button").addEventListener("click", startTest);
+      // Configurar eventos
+      document.getElementById("start-button").addEventListener("click", () => {
+        QuizManager.start();
+      });
       
-      // Verificar se há parâmetro de debug na URL
+      // Verificar modo debug
       if (window.location.search.includes('debug=true')) {
         debugMode = true;
         document.getElementById("debug-info").style.display = "block";
-        document.getElementById("debug-info").textContent = "Modo de debug ativado";
+        Utils.debug("Modo de debug ativado");
       }
+
+      // Validação em tempo real
+      document.getElementById("name").addEventListener("blur", () => {
+        const nome = document.getElementById("name").value.trim();
+        if (nome && !Utils.validarNome(nome)) {
+          Validation.showError('name-error', 'Nome deve ter pelo menos 2 caracteres.');
+        } else {
+          Validation.hideError('name-error');
+        }
+      });
+
+      document.getElementById("email").addEventListener("blur", () => {
+        const email = document.getElementById("email").value.trim();
+        if (email && !Utils.validarEmail(email)) {
+          Validation.showError('email-error', 'Por favor, insira um e-mail válido.');
+        } else {
+          Validation.hideError('email-error');
+        }
+      });
     });
   </script>
   
-  <!-- Adicionar Chart.js para o gráfico -->
+  <!-- Chart.js para o gráfico -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
+
