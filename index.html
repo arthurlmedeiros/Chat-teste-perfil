@@ -635,42 +635,7 @@ function extrairInformacoesResposta(rawData) {
         }, null, 2);
     }
 
-    return {
-      output: {
-        userName: extractedUserName,
-        userEmail: userEmail,
-        resultadoOrdenado: extractedResultadoOrdenado,
-        percentuais: extractedPercentuais,
-        perfilPredominante: extractedPerfilPredominante
-      },
-      temDadosSuficientes: temDadosSuficientes
-    };
-  } catch (e) {
-    if (debugMode) {
-      document.getElementById("debug-info").style.display = "block";
-      document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
-      document.getElementById("debug-info").textContent += "\n\nDados brutos recebidos: " + JSON.stringify(rawData);
-    }
-    return {
-      output: resultadoPadrao,
-      temDadosSuficientes: false
-    };
-  }
-}
 
-    // Se ainda for string, tenta regex (como seu código original)
-    let processedData = String(rawData);
-
-    const userNameMatch = processedData.match(/userName"?\s*:\s*"([^"]+)"/);
-    const perfilPredominanteMatch = processedData.match(/perfilPredominante"?\s*:\s*"([^"]+)"/);
-    const resultadoOrdenadoMatch = processedData.match(/resultadoOrdenado"?\s*:\s*"([^"]+)"/);
-
-    if (!userNameMatch || !perfilPredominanteMatch || !resultadoOrdenadoMatch) {
-      return {
-        output: resultadoPadrao,
-        temDadosSuficientes: false
-      };
-    }
 
     const extractedUserName = userNameMatch[1];
     const extractedPerfilPredominante = perfilPredominanteMatch[1];
@@ -687,20 +652,7 @@ function extrairInformacoesResposta(rawData) {
       }
     });
 
-    return {
-      output: {
-        userName: extractedUserName,
-        userEmail: userEmail,
-        resultadoOrdenado: extractedResultadoOrdenado,
-        percentuais: extractedPercentuais,
-        perfilPredominante: extractedPerfilPredominante
-      },
-      temDadosSuficientes: !!extractedPerfilPredominante && extractedResultadoOrdenado.length > 0
-    };
-  } catch (e) {
-    if (debugMode) {
-      document.getElementById("debug-info").textContent += "\n\nErro: " + e.message;
-    }
+
     return {
       output: resultadoPadrao,
       temDadosSuficientes: false
