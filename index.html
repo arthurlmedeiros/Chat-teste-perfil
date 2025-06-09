@@ -517,44 +517,6 @@
       // Função para delay
       delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
-      },
-
-      // Função para limpar e extrair a primeira parte válida da resposta
-      extractFirstValidResponse(rawData) {
-        try {
-          // Converter para string se necessário
-          let dataStr = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
-          
-          Utils.debug("Dados brutos recebidos", dataStr);
-          
-          // Procurar pelo primeiro bloco JSON válido que contenha "output"
-          const outputMatch = dataStr.match(/\{\s*"output"\s*:\s*\{[^}]*\}/);
-          if (outputMatch) {
-            Utils.debug("Primeiro bloco output encontrado", outputMatch[0]);
-            return outputMatch[0];
-          }
-          
-          // Se não encontrar, procurar por qualquer estrutura que contenha os dados necessários
-          const patterns = [
-            // Padrão 1: userName, resultadoOrdenado, perfilPredominante
-            /"userName"\s*:\s*([^,}]+)[^}]*"resultadoOrdenado"\s*:\s*([^,}]+)[^}]*"perfilPredominante"\s*:\s*([^,}]+)/,
-            // Padrão 2: Buscar apenas os campos essenciais
-            /userName[^:]*:\s*([^,\n]+)[^}]*resultadoOrdenado[^:]*:\s*([^,\n]+)[^}]*perfilPredominante[^:]*:\s*([^,\n}]+)/
-          ];
-          
-          for (const pattern of patterns) {
-            const match = dataStr.match(pattern);
-            if (match) {
-              Utils.debug("Padrão encontrado", match);
-              return dataStr.substring(0, dataStr.indexOf(match[0]) + match[0].length);
-            }
-          }
-          
-          return dataStr;
-        } catch (error) {
-          Utils.debug("Erro ao extrair primeira resposta válida", error);
-          return rawData;
-        }
       }
     };
 
@@ -660,7 +622,7 @@
       }
     };
 
-    // Processador de respostas do webhook (VERSÃO CORRIGIDA)
+    // Processador de respostas do webhook (VERSÃO CORRIGIDA PARA GRÁFICO)
     const ResponseProcessor = {
       extractResponseData(rawData) {
         Utils.debug("Iniciando processamento da resposta", rawData);
@@ -674,16 +636,16 @@
         };
 
         try {
-          // Primeiro, extrair apenas a primeira parte válida da resposta
-          const cleanData = Utils.extractFirstValidResponse(rawData);
-          Utils.debug("Dados limpos extraídos", cleanData);
+          // Converter para string se necessário
+          let dataStr = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+          Utils.debug("Dados brutos recebidos", dataStr);
           
           // Tentar múltiplas estratégias de parsing
           const strategies = [
-            () => this.parseAsDirectObject(cleanData),
-            () => this.parseWithRegexExtraction(cleanData),
-            () => this.parseAsNestedJSON(cleanData),
-            () => this.parseWithFallbackRegex(cleanData)
+            () => this.parseWithDirectRegex(dataStr),
+            () => this.parseWithCompleteExtraction(dataStr),
+            () => this.parseAsNestedJSON(dataStr),
+            () => this.parseWithFallbackRegex(dataStr)
           ];
 
           for (const strategy of strategies) {
@@ -708,6 +670,98 @@
         }
       },
 
+      parseWithDirectRegex(dataStr) {
+        Utils.debug("Tentando parse com regex direta");
+        
+        // Extrair campos usando regex mais robusta que captura a string completa
+        const userNameMatch = dataStr.match(/["']?userName["']?\s*:\s*["']?([^"',\n}]+)["']?/);
+        const resultadoMatch = dataStr.match(/["']?resultadoOrdenado["']?\s*:\s*["']?([^"'\n}]+?)["']?\s*,/);
+        const perfilMatch = dataStr.match(/["']?perfilPredominante["']?\s*:\s*["']?([^"',\n}]+)["']?/);
+
+        Utils.debug("Matches encontrados", { userNameMatch, resultadoMatch, perfilMatch });
+
+        if (userNameMatch && resultadoMatch && perfilMatch) {
+          const userName = userNameMatch[1].trim();
+          const resultadoStr = resultadoMatch[1].trim();
+          const perfilPredominante = perfilMatch[1].trim();
+
+          Utils.debug("Campos extraídos", { userName, resultadoStr, perfilPredominante });
+
+          const resultadoOrdenado = this.parseResultadoOrdenado(resultadoStr);
+          const percentuais = this.parsePercentuais(resultadoStr);
+
+          if (resultadoOrdenado.length > 0 && Object.values(percentuais).some(p => p > 0)) {
+            return {
+              output: {
+                userName: userName,
+                userEmail: userEmail,
+                resultadoOrdenado: resultadoOrdenado,
+                percentuais: percentuais,
+                perfilPredominante: perfilPredominante
+              },
+              isValid: true
+            };
+          }
+        }
+        return null;
+      },
+
+      parseWithCompleteExtraction(dataStr) {
+        Utils.debug("Tentando parse com extração completa");
+        
+        // Buscar por toda a string de resultadoOrdenado incluindo vírgulas
+        const resultadoCompleto = dataStr.match(/resultadoOrdenado[^:]*:\s*([^,}]+(?:,[^,}]+)*)/);
+        const userNameMatch = dataStr.match(/userName[^:]*:\s*([^,\n}]+)/);
+        const perfilMatch = dataStr.match(/perfilPredominante[^:]*:\s*([^,\n}]+)/);
+
+        Utils.debug("Extração completa", { resultadoCompleto, userNameMatch, perfilMatch });
+
+        if (resultadoCompleto && userNameMatch && perfilMatch) {
+          const userName = userNameMatch[1].replace(/['"]/g, '').trim();
+          const resultadoStr = resultadoCompleto[1].replace(/['"]/g, '').trim();
+          const perfilPredominante = perfilMatch[1].replace(/['"]/g, '').trim();
+
+          Utils.debug("Dados extraídos completos", { userName, resultadoStr, perfilPredominante });
+
+          const resultadoOrdenado = this.parseResultadoOrdenado(resultadoStr);
+          const percentuais = this.parsePercentuais(resultadoStr);
+
+          if (resultadoOrdenado.length > 0) {
+            return {
+              output: {
+                userName: userName,
+                userEmail: userEmail,
+                resultadoOrdenado: resultadoOrdenado,
+                percentuais: percentuais,
+                perfilPredominante: perfilPredominante
+              },
+              isValid: true
+            };
+          }
+        }
+        return null;
+      },
+
+      parseAsNestedJSON(dataStr) {
+        Utils.debug("Tentando parse como JSON aninhado");
+        
+        // Tentar encontrar e extrair o primeiro JSON válido
+        const jsonMatches = dataStr.match(/\{[^{}]*\}/g);
+        if (jsonMatches) {
+          for (const jsonStr of jsonMatches) {
+            try {
+              const parsed = JSON.parse(jsonStr);
+              if (parsed.output || (parsed.userName && parsed.perfilPredominante)) {
+                return this.parseAsDirectObject(parsed);
+              }
+            } catch (e) {
+              continue;
+            }
+          }
+        }
+        return null;
+      },
+
       parseAsDirectObject(data) {
         Utils.debug("Tentando parse como objeto direto");
         
@@ -729,75 +783,14 @@
         return null;
       },
 
-      parseWithRegexExtraction(data) {
-        Utils.debug("Tentando parse com regex de extração");
-        
-        const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
-        
-        // Extrair campos usando regex mais robusta
-        const userNameMatch = dataStr.match(/["']?userName["']?\s*:\s*["']?([^"',\n}]+)["']?/);
-        const resultadoMatch = dataStr.match(/["']?resultadoOrdenado["']?\s*:\s*["']?([^"'\n}]+)["']?/);
-        const perfilMatch = dataStr.match(/["']?perfilPredominante["']?\s*:\s*["']?([^"',\n}]+)["']?/);
-
-        if (userNameMatch && resultadoMatch && perfilMatch) {
-          const userName = userNameMatch[1].trim();
-          const resultadoStr = resultadoMatch[1].trim();
-          const perfilPredominante = perfilMatch[1].trim();
-
-          Utils.debug("Campos extraídos", { userName, resultadoStr, perfilPredominante });
-
-          const resultadoOrdenado = this.parseResultadoOrdenado(resultadoStr);
-          const percentuais = this.parsePercentuais(resultadoStr);
-
-          if (resultadoOrdenado.length > 0 && Object.keys(percentuais).length > 0) {
-            return {
-              output: {
-                userName: userName,
-                userEmail: userEmail,
-                resultadoOrdenado: resultadoOrdenado,
-                percentuais: percentuais,
-                perfilPredominante: perfilPredominante
-              },
-              isValid: true
-            };
-          }
-        }
-        return null;
-      },
-
-      parseAsNestedJSON(data) {
-        Utils.debug("Tentando parse como JSON aninhado");
-        
-        let dataStr = typeof data === 'string' ? data : JSON.stringify(data);
-        
-        // Tentar encontrar e extrair o primeiro JSON válido
-        const jsonMatches = dataStr.match(/\{[^{}]*\}/g);
-        if (jsonMatches) {
-          for (const jsonStr of jsonMatches) {
-            try {
-              const parsed = JSON.parse(jsonStr);
-              if (parsed.output || (parsed.userName && parsed.perfilPredominante)) {
-                return this.parseAsDirectObject(parsed);
-              }
-            } catch (e) {
-              continue;
-            }
-          }
-        }
-        return null;
-      },
-
-      parseWithFallbackRegex(data) {
+      parseWithFallbackRegex(dataStr) {
         Utils.debug("Tentando parse com regex de fallback");
-        
-        const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
         
         // Regex mais permissiva para capturar os dados essenciais
         const patterns = [
-          // Padrão para capturar nome, resultado e perfil em qualquer ordem
           {
             name: /(?:userName|name)[^:]*:\s*([^,\n}]+)/i,
-            result: /(?:resultadoOrdenado|resultado)[^:]*:\s*([^,\n}]+)/i,
+            result: /(?:resultadoOrdenado|resultado)[^:]*:\s*([^,\n}]+(?:,[^,\n}]+)*)/i,
             perfil: /(?:perfilPredominante|perfil)[^:]*:\s*([^,\n}]+)/i
           }
         ];
@@ -1038,10 +1031,22 @@
           return;
         }
 
+        Utils.debug("Criando gráfico com percentuais", percentuais);
+
         const perfilOrdem = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
         const labels = perfilOrdem;
         const values = perfilOrdem.map(perfil => percentuais[perfil] || 0);
-        const minValue = Math.min(...Object.values(percentuais));
+        
+        Utils.debug("Valores para o gráfico", { labels, values });
+        
+        // Verificar se temos valores válidos
+        const totalPercentual = values.reduce((sum, val) => sum + val, 0);
+        if (totalPercentual === 0) {
+          Utils.debug("Nenhum percentual válido encontrado, não criando gráfico");
+          return;
+        }
+        
+        const minValue = Math.min(...values.filter(v => v > 0));
         
         const ctx = document.getElementById("graficoPerfil").getContext("2d");
         
@@ -1101,6 +1106,8 @@
             }
           }
         });
+
+        Utils.debug("Gráfico criado com sucesso");
       },
 
       showDetailedProfile(perfilPredominante) {
