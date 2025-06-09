@@ -457,7 +457,7 @@ function startTest() {
     return;
   }
 
-  // ✅ Limpar variáveis globais antes de iniciar novo teste
+  // ✅ Resetar todas as variáveis antes de iniciar o teste
   respostas = {};
   perguntas = [];
   perguntasEnviadas = [];
@@ -465,7 +465,7 @@ function startTest() {
   resultadoAtual = null;
   emailEnviado = false;
 
-  // Preparar perguntas embaralhadas
+  // Preparar perguntas embaralhadas e mapear letras
   perguntas = embaralhar(perguntasBase).map((p, idx) => {
     const opcoes = embaralhar(p.opcoes);
     const perfilPorLetra = {};
@@ -480,8 +480,10 @@ function startTest() {
     return { id: idx, texto: p.texto, opcoes };
   });
 
+  // Ocultar introdução e mostrar quiz
   document.getElementById("intro-container").classList.add("hidden");
   document.getElementById("quiz").classList.remove("hidden");
+
   atualizarProgressBar();
   mostrarPergunta(perguntaAtual);
 }
