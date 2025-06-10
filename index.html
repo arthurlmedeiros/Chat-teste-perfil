@@ -622,7 +622,7 @@
       }
     };
 
-    // Processador de respostas do webhook (VERSÃO CORRIGIDA PARA GRÁFICO)
+    // Processador de respostas do webhook (VERSÃO CORRIGIDA PARA ESCALA DO GRÁFICO)
     const ResponseProcessor = {
       extractResponseData(rawData) {
         Utils.debug("Iniciando processamento da resposta", rawData);
@@ -1033,11 +1033,17 @@
 
         Utils.debug("Criando gráfico com percentuais", percentuais);
 
-        const perfilOrdem = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
-        const labels = perfilOrdem;
-        const values = perfilOrdem.map(perfil => percentuais[perfil] || 0);
+        // CORREÇÃO CRÍTICA: Garantir que a ordem dos dados corresponda exatamente à ordem dos labels
+        // A ordem no gráfico da imagem é: Lobo (topo), Tubarão (direita), Águia (baixo), Gato (esquerda)
+        const labelOrder = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
+        const values = labelOrder.map(perfil => {
+          const valor = percentuais[perfil] || 0;
+          Utils.debug(`Mapeando ${perfil}: ${valor}%`);
+          return valor;
+        });
         
-        Utils.debug("Valores para o gráfico", { labels, values });
+        Utils.debug("Ordem dos labels", labelOrder);
+        Utils.debug("Valores correspondentes", values);
         
         // Verificar se temos valores válidos
         const totalPercentual = values.reduce((sum, val) => sum + val, 0);
@@ -1046,8 +1052,7 @@
           return;
         }
         
-        const minValue = Math.min(...values.filter(v => v > 0));
-        
+        // CORREÇÃO DA ESCALA: Sempre começar do 0 para mostrar proporções corretas
         const ctx = document.getElementById("graficoPerfil").getContext("2d");
         
         const cores = {
@@ -1057,22 +1062,24 @@
           'Lobo': '#f39c12'
         };
         
-        const backgroundColors = labels.map(label => cores[label] || '#999');
-        const scaleMin = minValue > 0 ? Math.max(0, minValue - 5) : 0;
+        const backgroundColors = labelOrder.map(label => cores[label] || '#999');
         
         graficoChart = new Chart(ctx, {
           type: "radar",
           data: {
-            labels: labels.map(label => `${label}`),
+            labels: labelOrder,
             datasets: [{
-              label: 'Seu Perfil',
+              label: 'Seu Perfil (%)',
               data: values,
               backgroundColor: 'rgba(54, 162, 235, 0.2)',
               borderColor: 'rgb(54, 162, 235)',
               pointBackgroundColor: backgroundColors,
               pointBorderColor: '#fff',
               pointHoverBackgroundColor: '#fff',
-              pointHoverBorderColor: backgroundColors
+              pointHoverBorderColor: backgroundColors,
+              borderWidth: 2,
+              pointRadius: 6,
+              pointHoverRadius: 8
             }]
           },
           options: {
@@ -1080,34 +1087,66 @@
             maintainAspectRatio: true,
             scales: {
               r: {
-                angleLines: { color: 'rgba(255, 255, 255, 0.3)' },
-                grid: { color: 'rgba(255, 255, 255, 0.3)' },
-                pointLabels: { color: '#fff' },
+                angleLines: { 
+                  color: 'rgba(255, 255, 255, 0.3)',
+                  lineWidth: 1
+                },
+                grid: { 
+                  color: 'rgba(255, 255, 255, 0.3)',
+                  lineWidth: 1
+                },
+                pointLabels: { 
+                  color: '#fff',
+                  font: {
+                    size: 14,
+                    weight: 'bold'
+                  }
+                },
                 ticks: {
                   color: '#fff',
                   backdropColor: 'rgba(0, 0, 0, 0.7)',
-                  beginAtZero: false,
-                  min: scaleMin,
-                  max: 100,
-                  stepSize: 10
+                  beginAtZero: true,  // CRÍTICO: Sempre começar do zero
+                  min: 0,             // CRÍTICO: Mínimo sempre 0
+                  max: 100,           // Máximo sempre 100%
+                  stepSize: 10,       // Incrementos de 10%
+                  showLabelBackdrop: true,
+                  font: {
+                    size: 12
+                  }
                 }
               }
             },
             plugins: {
               legend: { 
                 position: "bottom",
-                labels: { color: '#fff' }
+                labels: { 
+                  color: '#fff',
+                  font: {
+                    size: 12
+                  }
+                }
               },
               title: { 
                 display: true, 
                 text: "Distribuição de Perfil Comportamental",
-                color: "#ffffff"
+                color: "#ffffff",
+                font: {
+                  size: 16,
+                  weight: 'bold'
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.label}: ${context.parsed.r}%`;
+                  }
+                }
               }
             }
           }
         });
 
-        Utils.debug("Gráfico criado com sucesso");
+        Utils.debug("Gráfico criado com sucesso com escala corrigida");
       },
 
       showDetailedProfile(perfilPredominante) {
