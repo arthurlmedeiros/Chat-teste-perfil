@@ -951,16 +951,16 @@
     // Gerenciador de resultados
 function showDetailedProfile(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const chaveLimpa = perfil.trim().replace(/\\n|\\r|\n|\r/g, '');
+  const chaveLimpa = perfil.trim().replace(/\n|\r|\t|\"/g, '');
   const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
-    container.innerHTML = `<p>Detalhes não encontrados para o perfil "${perfil}".</p>`;
+    container.innerHTML = `<p>Detalhes não encontrados para o perfil "${chaveLimpa}".</p>`;
     return;
   }
 
   container.innerHTML = `
-    <h3>${perfil}</h3>
+    <h3>${chaveLimpa}</h3>
     <div class="perfil-secao">
       <h4>Características principais:</h4>
       <p>${info.caracteristicas}</p>
@@ -971,60 +971,64 @@ function showDetailedProfile(perfil) {
     </div>
     <div class="perfil-secao">
       <h4>Pontos fortes:</h4>
-      <p>${info.pontosFortes}</p>
+      <p>${info.pontosFortesTexto}</p>
     </div>
     <div class="perfil-secao">
       <h4>Pontos de melhoria:</h4>
-      <p>${info.pontosMelhoria}</p>
+      <p>${info.pontosMelhoriaTexto}</p>
     </div>
     <div class="perfil-secao">
       <h4>Motivações:</h4>
-      <p>${info.motivacoes}</p>
+      <p>${info.motivacoesTexto}</p>
     </div>
     <div class="perfil-secao">
       <h4>Valores:</h4>
-      <p>${info.valores}</p>
+      <p>${info.valoresTexto}</p>
     </div>
   `;
 }
 
 function renderDetalhesDoPerfil(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const chaveLimpa = perfil.trim().replace(/\\n|\\r|\n|\r/g, '');
+  const chaveLimpa = perfil.trim().replace(/\n|\r|\t|\"/g, '');
   const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
-    container.innerHTML = `<p>Detalhes não encontrados para o perfil "${perfil}".</p>`;
+    container.innerHTML = `<p>Detalhes não encontrados para o perfil "${chaveLimpa}".</p>`;
     return;
   }
 
   container.innerHTML = `
-    <h3>${perfil}</h3>
+    <h3>${chaveLimpa}</h3>
     <div class="perfil-secao"><h4>Características principais:</h4><p>${info.caracteristicas}</p></div>
     <div class="perfil-secao"><h4>Traços comportamentais:</h4><p>${info.tracos}</p></div>
-    <div class="perfil-secao"><h4>Pontos fortes:</h4><p>${info.pontosFortes}</p></div>
-    <div class="perfil-secao"><h4>Pontos de melhoria:</h4><p>${info.pontosMelhoria}</p></div>
-    <div class="perfil-secao"><h4>Motivações:</h4><p>${info.motivacoes}</p></div>
-    <div class="perfil-secao"><h4>Valores:</h4><p>${info.valores}</p></div>
+    <div class="perfil-secao"><h4>Pontos fortes:</h4><p>${info.pontosFortesTexto}</p></div>
+    <div class="perfil-secao"><h4>Pontos de melhoria:</h4><p>${info.pontosMelhoriaTexto}</p></div>
+    <div class="perfil-secao"><h4>Motivações:</h4><p>${info.motivacoesTexto}</p></div>
+    <div class="perfil-secao"><h4>Valores:</h4><p>${info.valoresTexto}</p></div>
   `;
 }
 
 const ResultsManager = {
   displayResults(rawData) {
-    document.getElementById("quiz").classList.add("hidden");
-    document.getElementById("resultado-container").classList.remove("hidden");
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("resultado-container").classList.remove("hidden");
 
-    const { output, isValid } = ResponseProcessor.extractResponseData(rawData);
-    resultadoAtual = output;
+  const { output, isValid } = ResponseProcessor.extractResponseData(rawData);
+  resultadoAtual = output;
+  
+  resultadoAtual.resultadoOrdenado = resultadoAtual.resultadoOrdenado.filter(item => {
+    return item && typeof item === 'string' && !item.includes('{') && !item.toLowerCase().includes('percentuais');
+  })
 
-    if (!isValid) {
-      this.showError("Não foi possível obter seu perfil comportamental. Por favor, tente novamente.");
-      return;
-    }
+  if (!isValid) {
+    this.showError("Não foi possível obter seu perfil comportamental. Por favor, tente novamente.");
+    return;
+  }
 
     this.renderResults(output);
     this.createChart(output.percentuais);
-    const perfilLimpo = output.perfilPredominante?.replace(/\\n|\\r|\n|\r/g, "").trim();
+    const perfilLimpo = output.perfilPredominante?.replace(/\n|\r|\t|\"/g, '').trim();
     this.showDetailedProfile(perfilLimpo);
 
     // Configurar botão de reiniciar
