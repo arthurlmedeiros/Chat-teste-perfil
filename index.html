@@ -1047,7 +1047,8 @@ const ResultsManager = {
 
     this.renderResults(output);
     this.createChart(output.percentuais);
-    this.showDetailedProfile(output.perfilPredominante);
+    const perfilLimpo = output.perfilPredominante?.toString().replace(/\\n|\\r|\n|\r/g, "").trim();
+    this.showDetailedProfile(perfilLimpo);
 
     // Configurar botão de reiniciar
     document.getElementById("restart-button").addEventListener("click", () => {
