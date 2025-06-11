@@ -1032,184 +1032,178 @@ function renderDetalhesDoPerfil(perfil) {
   `;
 }
 
-      const ResultsManager = {
-      displayResults(rawData) {
-        document.getElementById("quiz").classList.add("hidden");
-        document.getElementById("resultado-container").classList.remove("hidden");
-        
-        const { output, isValid } = ResponseProcessor.extractResponseData(rawData);
-        resultadoAtual = output;
-        
-        if (!isValid) {
-          this.showError("Não foi possível obter seu perfil comportamental. Por favor, tente novamente.");
-          return;
-        }
-        
-        this.renderResults(output);
-        this.createChart(output.percentuais);
-        this.showDetailedProfile(output.perfilPredominante);
-        
-        // Configurar botão de reiniciar
-        document.getElementById("restart-button").addEventListener("click", () => {
-          location.reload();
-        });
-        
-        // Enviar e-mail após renderizar
-        setTimeout(() => {
-          EmailManager.sendResultEmail();
-        }, CONFIG.EMAIL_SEND_DELAY);
+const ResultsManager = {
+  displayResults(rawData) {
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("resultado-container").classList.remove("hidden");
+
+    const { output, isValid } = ResponseProcessor.extractResponseData(rawData);
+    resultadoAtual = output;
+
+    if (!isValid) {
+      this.showError("Não foi possível obter seu perfil comportamental. Por favor, tente novamente.");
+      return;
+    }
+
+    this.renderResults(output);
+    this.createChart(output.percentuais);
+    this.showDetailedProfile(output.perfilPredominante);
+
+    // Configurar botão de reiniciar
+    document.getElementById("restart-button").addEventListener("click", () => {
+      location.reload();
+    });
+
+    // Enviar e-mail após renderizar
+    setTimeout(() => {
+      EmailManager.sendResultEmail();
+    }, CONFIG.EMAIL_SEND_DELAY);
+  },
+
+  showError(message) {
+    document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
+    document.getElementById("perfil-detalhes").innerHTML = `<p>${message}</p>`;
+  },
+
+  renderResults(data) {
+    const { userName: nome, perfilPredominante, resultadoOrdenado } = data;
+
+    document.getElementById("perfil-titulo").innerHTML =
+      `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
+
+    let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
+
+    resultadoOrdenado.forEach((perfil, index) => {
+      const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
+      const posicao = posicoes[index] || `${index + 1}º`;
+      detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
+    });
+
+    detalhesHTML += "<p>Obrigado por participar do teste!</p>";
+    document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
+  },
+
+  createChart(percentuais) {
+    if (typeof Chart === 'undefined') {
+      Utils.debug("Chart.js não disponível");
+      return;
+    }
+
+    Utils.debug("Criando gráfico com percentuais", percentuais);
+
+    const labelOrder = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
+    const values = labelOrder.map(perfil => {
+      const valor = percentuais[perfil] || 0;
+      Utils.debug(`Mapeando ${perfil}: ${valor}%`);
+      return valor;
+    });
+
+    const totalPercentual = values.reduce((sum, val) => sum + val, 0);
+    if (totalPercentual === 0) {
+      Utils.debug("Nenhum percentual válido encontrado, não criando gráfico");
+      return;
+    }
+
+    const ctx = document.getElementById("graficoPerfil").getContext("2d");
+
+    const cores = {
+      'Águia': '#3498db',
+      'Tubarão': '#e74c3c',
+      'Gato': '#2ecc71',
+      'Lobo': '#f39c12'
+    };
+
+    const backgroundColors = labelOrder.map(label => cores[label] || '#999');
+
+    graficoChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: labelOrder,
+        datasets: [{
+          label: 'Seu Perfil (%)',
+          data: values,
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgb(54, 162, 235)',
+          pointBackgroundColor: backgroundColors,
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: backgroundColors,
+          borderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
       },
-
-      showError(message) {
-        document.getElementById("perfil-titulo").textContent = "Erro ao processar resultados";
-        document.getElementById("perfil-detalhes").innerHTML = `<p>${message}</p>`;
-      },
-
-      renderResults(data) {
-        const { userName: nome, perfilPredominante, resultadoOrdenado } = data;
-        
-        document.getElementById("perfil-titulo").innerHTML = 
-          `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
-        
-        let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
-        
-        resultadoOrdenado.forEach((perfil, index) => {
-          const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
-          const posicao = posicoes[index] || `${index + 1}º`;
-          detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
-        });
-        
-        detalhesHTML += "<p>Obrigado por participar do teste!</p>";
-        document.getElementById("perfil-detalhes").innerHTML = detalhesHTML;
-      },
-
-      createChart(percentuais) {
-        if (typeof Chart === 'undefined') {
-          Utils.debug("Chart.js não disponível");
-          return;
-        }
-
-        Utils.debug("Criando gráfico com percentuais", percentuais);
-
-        // CORREÇÃO CRÍTICA: Garantir que a ordem dos dados corresponda exatamente à ordem dos labels
-        // A ordem no gráfico da imagem é: Lobo (topo), Tubarão (direita), Águia (baixo), Gato (esquerda)
-        const labelOrder = ['Lobo', 'Tubarão', 'Águia', 'Gato'];
-        const values = labelOrder.map(perfil => {
-          const valor = percentuais[perfil] || 0;
-          Utils.debug(`Mapeando ${perfil}: ${valor}%`);
-          return valor;
-        });
-        
-        Utils.debug("Ordem dos labels", labelOrder);
-        Utils.debug("Valores correspondentes", values);
-        
-        // Verificar se temos valores válidos
-        const totalPercentual = values.reduce((sum, val) => sum + val, 0);
-        if (totalPercentual === 0) {
-          Utils.debug("Nenhum percentual válido encontrado, não criando gráfico");
-          return;
-        }
-        
-        // CORREÇÃO DA ESCALA: Sempre começar do 0 para mostrar proporções corretas
-        const ctx = document.getElementById("graficoPerfil").getContext("2d");
-        
-        const cores = {
-          'Águia': '#3498db',
-          'Tubarão': '#e74c3c',
-          'Gato': '#2ecc71',
-          'Lobo': '#f39c12'
-        };
-        
-        const backgroundColors = labelOrder.map(label => cores[label] || '#999');
-        
-        graficoChart = new Chart(ctx, {
-          type: "radar",
-          data: {
-            labels: labelOrder,
-            datasets: [{
-              label: 'Seu Perfil (%)',
-              data: values,
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
-              borderColor: 'rgb(54, 162, 235)',
-              pointBackgroundColor: backgroundColors,
-              pointBorderColor: '#fff',
-              pointHoverBackgroundColor: '#fff',
-              pointHoverBorderColor: backgroundColors,
-              borderWidth: 2,
-              pointRadius: 6,
-              pointHoverRadius: 8
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-              r: {
-                angleLines: { 
-                  color: 'rgba(255, 255, 255, 0.3)',
-                  lineWidth: 1
-                },
-                grid: { 
-                  color: 'rgba(255, 255, 255, 0.3)',
-                  lineWidth: 1
-                },
-                pointLabels: { 
-                  color: '#fff',
-                  font: {
-                    size: 14,
-                    weight: 'bold'
-                  }
-                },
-                ticks: {
-                  color: '#fff',
-                  backdropColor: 'rgba(0, 0, 0, 0.7)',
-                  beginAtZero: true,  // CRÍTICO: Sempre começar do zero
-                  min: 0,             // CRÍTICO: Mínimo sempre 0
-                  max: 100,           // Máximo sempre 100%
-                  stepSize: 10,       // Incrementos de 10%
-                  showLabelBackdrop: true,
-                  font: {
-                    size: 12
-                  }
-                }
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            angleLines: {
+              color: 'rgba(255, 255, 255, 0.3)',
+              lineWidth: 1
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.3)',
+              lineWidth: 1
+            },
+            pointLabels: {
+              color: '#fff',
+              font: {
+                size: 14,
+                weight: 'bold'
               }
             },
-            plugins: {
-              legend: { 
-                position: "bottom",
-                labels: { 
-                  color: '#fff',
-                  font: {
-                    size: 12
-                  }
-                }
-              },
-              title: { 
-                display: true, 
-                text: "Distribuição de Perfil Comportamental",
-                color: "#ffffff",
-                font: {
-                  size: 16,
-                  weight: 'bold'
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return `${context.label}: ${context.parsed.r}%`;
-                  }
-                }
+            ticks: {
+              color: '#fff',
+              backdropColor: 'rgba(0, 0, 0, 0.7)',
+              beginAtZero: true,
+              min: 0,
+              max: 100,
+              stepSize: 10,
+              showLabelBackdrop: true,
+              font: {
+                size: 12
               }
             }
           }
-        });
+        },
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              color: '#fff',
+              font: {
+                size: 12
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: "Distribuição de Perfil Comportamental",
+            color: "#ffffff",
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `${context.label}: ${context.parsed.r}%`;
+              }
+            }
+          }
+        }
+      }
+    });
 
-        Utils.debug("Gráfico criado com sucesso com escala corrigida");
-      },
+    Utils.debug("Gráfico criado com sucesso com escala corrigida");
+  },
 
-showDetailedProfile(perfilPredominante) {
-  renderDetalhesDoPerfil(perfilPredominante); // ✅ chama a função global correta
-}
+  showDetailedProfile(perfilPredominante) {
+    renderDetalhesDoPerfil(perfilPredominante);
+  }
+};
 
         emailEnviado = true;
         UI.showStatusMessage("email-status", "Enviando resultado para seu e-mail...", null);
