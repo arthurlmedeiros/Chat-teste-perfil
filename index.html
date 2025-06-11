@@ -826,15 +826,13 @@
       },
 
       parseResultadoOrdenado(resultadoStr) {
-        if (!resultadoStr) return [];
-        
-        try {
-          // Se for array, converter para string
-          if (Array.isArray(resultadoStr)) {
-            resultadoStr = resultadoStr.join(',');
-          }
-          
-          // Limpar a string
+      if (!resultadoStr) return [];
+
+      try {
+        if (Array.isArray(resultadoStr)) {
+          resultadoStr = resultadoStr.join(',');
+        }
+
           const cleanStr = String(resultadoStr)
             .replace(/\[object Object\]/g, '')
             .replace(/['"]/g, '')
@@ -842,18 +840,15 @@
 
           Utils.debug("String de resultado limpa", cleanStr);
 
-          // Dividir por vírgulas e processar cada item
-          const items = cleanStr.split(',').map(item => item.trim()).filter(item => item.length > 0);
-          const resultados = [];
+          return cleanStr
+              .split(',')
+              .map(item => item.trim())
+              .filter(item => item.length > 0 && !item.includes('[object Object]'));
 
-          for (const item of items) {
-            // Extrair nome do perfil (antes do parênteses ou toda a string se não houver parênteses)
-            const match = item.match(/^([^(]+)/);
-            if (match) {
-              const perfil = match[1].trim();
-              if (perfil && !perfil.includes('object') && perfil.length > 0) {
-                resultados.push(perfil);
-              }
+            } catch (error) {
+            Utils.debug("Erro ao processar resultado ordenado", error);
+            return [];
+            }
             }
           }
 
@@ -965,7 +960,8 @@
     // Gerenciador de resultados
 function showDetailedProfile(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const info = perfilDetalhado[perfil];
+  const chaveLimpa = perfil.trim().replace(/\\n|\\r|\n|\r/g, '');
+  const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
     container.innerHTML = `<p>Detalhes não encontrados para o perfil "${perfil}".</p>`;
@@ -1003,7 +999,8 @@ function showDetailedProfile(perfil) {
 
 function renderDetalhesDoPerfil(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const info = perfilDetalhado[perfil];
+  const chaveLimpa = perfil.trim().replace(/\\n|\\r|\n|\r/g, '');
+  const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
     container.innerHTML = `<p>Detalhes não encontrados para o perfil "${perfil}".</p>`;
