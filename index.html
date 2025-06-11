@@ -132,7 +132,7 @@
       padding: 20px;
     }
     .loading::after {
-      content: '';
+      content: ";
       display: inline-block;
       width: 20px;
       height: 20px;
@@ -478,6 +478,7 @@
       }
     };
 
+    // Nova função para exibir os detalhes do perfil
     function exibirDetalhesDoPerfil(perfil) {
       const detalhesDiv = document.getElementById("perfil-detalhado");
       detalhesDiv.innerHTML = ""; // Limpa o conteúdo anterior
@@ -761,9 +762,9 @@
         Utils.debug("Extração completa", { resultadoCompleto, userNameMatch, perfilMatch });
 
         if (resultadoCompleto && userNameMatch && perfilMatch) {
-          const userName = userNameMatch[1].replace(/["']/g, '').trim();
-          const resultadoStr = resultadoCompleto[1].replace(/["']/g, '').trim();
-          const perfilPredominante = perfilMatch[1].replace(/["']/g, '').trim();
+          const userName = userNameMatch[1].replace(/[""]/g, \'\').trim();
+          const resultadoStr = resultadoCompleto[1].replace(/[""]/g, \'\').trim();
+          const perfilPredominante = perfilMatch[1].replace(/[""]/g, \'\').trim();
 
           Utils.debug("Campos extraídos", { userName, resultadoStr, perfilPredominante });
 
@@ -844,7 +845,7 @@
           return resultadoStr.replace(/[{}]/g, "").split(",").map(item => {
             const parts = item.split(":");
             if (parts.length === 2) {
-              return { perfil: parts[0].replace(/["']/g, '').trim(), percentual: parseFloat(parts[1]) };
+              return { perfil: parts[0].replace(/[""]/g, \'\').trim(), percentual: parseFloat(parts[1]) };
             }
             return null;
           }).filter(item => item !== null);
@@ -857,10 +858,10 @@
       parsePercentuais(resultadoStr) {
         Utils.debug("Parseando percentuais", resultadoStr);
         const percentuais = {};
-        const regex = /(["']?Águia["']?|["']?Tubarão["']?|["']?Gato["']?|["']?Lobo["']?)\s*:\s*(\d+\.?\d*)/g;
+        const regex = /([""]?Águia[""]?|[""]?Tubarão[""]?|[""]?Gato[""]?|[""]?Lobo[""]?)\s*:\s*(\d+\.?\d*)/g;
         let match;
         while ((match = regex.exec(resultadoStr)) !== null) {
-          percentuais[match[1].replace(/["']/g, '')] = parseFloat(match[2]);
+          percentuais[match[1].replace(/[""]/g, \'\')] = parseFloat(match[2]);
         }
         return percentuais;
       }
@@ -999,7 +1000,7 @@
         perfilDetalhesDiv.appendChild(p);
       });
 
-      // Aqui é onde a nova funcionalidade será adicionada
+      // Chamada para a nova função
       exibirDetalhesDoPerfil(resultado.perfilPredominante);
 
       renderizarGrafico(resultado.percentuais);
