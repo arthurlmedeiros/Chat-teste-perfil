@@ -1187,17 +1187,9 @@ function showDetailedProfile(perfil) {
         Utils.debug("Gráfico criado com sucesso com escala corrigida");
       },
 
-showDetailedProfile(perfilPredominante) {
-  showDetailedProfile(perfilPredominante);
-}
-
-    // Gerenciador de e-mail
-     EmailManager = {
-      async sendResultEmail() {
-        if (emailEnviado || !this.isValidResult()) {
-          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
-          return;
-        }
+      showDetailedProfile(perfilPredominante) {
+        showDetailedProfile(perfilPredominante);
+      }
 
         emailEnviado = true;
         UI.showStatusMessage("email-status", "Enviando resultado para seu e-mail...", null);
@@ -1261,6 +1253,14 @@ showDetailedProfile(perfilPredominante) {
         };
       }
     };
+    
+    // Gerenciador de e-mail
+    const EmailManager = {
+      async sendResultEmail() {
+        if (emailEnviado || !this.isValidResult()) {
+          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
+          return;
+        }
 
     // Gerenciador de quiz
     const QuizManager = {
