@@ -1012,6 +1012,26 @@ function showDetailedProfile(perfil) {
   `;
 }
 
+function renderDetalhesDoPerfil(perfil) {
+  const container = document.getElementById("perfil-detalhado");
+  const info = perfilDetalhado[perfil];
+
+  if (!info) {
+    container.innerHTML = `<p>Detalhes não encontrados para o perfil "${perfil}".</p>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <h3>${perfil}</h3>
+    <div class="perfil-secao"><h4>Características principais:</h4><p>${info.caracteristicas}</p></div>
+    <div class="perfil-secao"><h4>Traços comportamentais:</h4><p>${info.tracos}</p></div>
+    <div class="perfil-secao"><h4>Pontos fortes:</h4><p>${info.pontosFortes}</p></div>
+    <div class="perfil-secao"><h4>Pontos de melhoria:</h4><p>${info.pontosMelhoria}</p></div>
+    <div class="perfil-secao"><h4>Motivações:</h4><p>${info.motivacoes}</p></div>
+    <div class="perfil-secao"><h4>Valores:</h4><p>${info.valores}</p></div>
+  `;
+}
+
       const ResultsManager = {
       displayResults(rawData) {
         document.getElementById("quiz").classList.add("hidden");
@@ -1187,9 +1207,18 @@ function showDetailedProfile(perfil) {
         Utils.debug("Gráfico criado com sucesso com escala corrigida");
       },
 
-      showDetailedProfile(perfilPredominante) {
-        showDetailedProfile(perfilPredominante);
-      }
+showDetailedProfile(perfilPredominante) {
+  renderDetalhesDoPerfil(perfilPredominante); // ✅ chama a função global correta
+}
+
+    // Gerenciador de e-mail
+    const EmailManager = {
+      async sendResultEmail() {
+        if (emailEnviado || !this.isValidResult()) {
+          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
+          return;
+        }
+
 
         emailEnviado = true;
         UI.showStatusMessage("email-status", "Enviando resultado para seu e-mail...", null);
@@ -1254,13 +1283,7 @@ function showDetailedProfile(perfil) {
       }
     };
     
-    // Gerenciador de e-mail
-    const EmailManager = {
-      async sendResultEmail() {
-        if (emailEnviado || !this.isValidResult()) {
-          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
-          return;
-        }
+
 
     // Gerenciador de quiz
     const QuizManager = {
