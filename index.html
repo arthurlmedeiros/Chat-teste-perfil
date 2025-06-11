@@ -683,7 +683,7 @@
         if (userNameMatch && resultadoMatch && perfilMatch) {
           const userName = userNameMatch[1].trim();
           const resultadoStr = resultadoMatch[1].trim();
-          const perfilPredominante = perfilMatch[1].trim();
+          const perfilPredominante = perfilMatch[1].replace(/\\n|\\r|\n|\r/g, "").trim();
 
           Utils.debug("Campos extraídos", { userName, resultadoStr, perfilPredominante });
 
@@ -1047,7 +1047,7 @@ const ResultsManager = {
 
     this.renderResults(output);
     this.createChart(output.percentuais);
-    const perfilLimpo = output.perfilPredominante?.toString().replace(/\\n|\\r|\n|\r/g, "").trim();
+    const perfilLimpo = output.perfilPredominante?.replace(/\\n|\\r|\n|\r/g, "").trim();
     this.showDetailedProfile(perfilLimpo);
 
     // Configurar botão de reiniciar
@@ -1067,7 +1067,8 @@ const ResultsManager = {
   },
 
   renderResults(data) {
-    const { userName: nome, perfilPredominante, resultadoOrdenado } = data;
+    let { userName: nome, perfilPredominante, resultadoOrdenado } = data;
+    perfilPredominante = perfilPredominante.replace(/\\n|\\r|\n|\r/g, "").trim();
 
     document.getElementById("perfil-titulo").innerHTML =
       `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
