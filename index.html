@@ -1188,38 +1188,42 @@
       },
 
 showDetailedProfile(perfilPredominante) {
-  showDetailedProfile(perfilPredominante);
+  const container = document.getElementById("perfil-detalhado");
+  const info = perfilDetalhado[perfilPredominante];
+  
+  if (!info) {
+    container.style.display = "none";
+    return;
+  }
+
+  container.innerHTML = `
+    <h3>${perfilPredominante}</h3>
+    <div class="perfil-secao">
+      <h4>Características principais:</h4>
+      <p>${info.caracteristicas}</p>
+    </div>
+    <div class="perfil-secao">
+      <h4>Traços comportamentais:</h4>
+      <p>${info.tracos}</p>
+    </div>
+    <div class="perfil-secao">
+      <h4>Pontos fortes:</h4>
+      <p>${info.pontosFortes}</p>
+    </div>
+    <div class="perfil-secao">
+      <h4>Pontos de melhoria:</h4>
+      <p>${info.pontosMelhoria}</p>
+    </div>
+    <div class="perfil-secao">
+      <h4>Motivações:</h4>
+      <p>${info.motivacoes}</p>
+    </div>
+    <div class="perfil-secao">
+      <h4>Valores:</h4>
+      <p>${info.valores}</p>
+    </div>
+  `;
 }
-        
-        container.innerHTML = `
-          <h3>Seu Perfil ${perfilPredominante} em Detalhes</h3>
-          <div class="perfil-secao">
-            <h4>Características Principais</h4>
-            <p>${info.caracteristicas}</p>
-          </div>
-          <div class="perfil-secao">
-            <h4>Traços Comportamentais</h4>
-            <p>${info.tracos}</p>
-          </div>
-          <div class="perfil-secao">
-            <h4>Pontos Fortes</h4>
-            <p>${info.pontosFortesTexto}</p>
-          </div>
-          <div class="perfil-secao">
-            <h4>Pontos de Melhoria</h4>
-            <p>${info.pontosMelhoriaTexto}</p>
-          </div>
-          <div class="perfil-secao">
-            <h4>Motivações</h4>
-            <p>${info.motivacoesTexto}</p>
-          </div>
-          <div class="perfil-secao">
-            <h4>Valores</h4>
-            <p>${info.valoresTexto}</p>
-          </div>
-        `;
-      }
-    };
 
     // Gerenciador de e-mail
     const EmailManager = {
