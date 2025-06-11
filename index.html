@@ -1205,6 +1205,13 @@ const ResultsManager = {
   }
 };
 
+// Gerenciador de e-mail
+  const EmailManager = {
+      async sendResultEmail() {
+        if (emailEnviado || !this.isValidResult()) {
+          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
+          return;
+        }
         emailEnviado = true;
         UI.showStatusMessage("email-status", "Enviando resultado para seu e-mail...", null);
 
@@ -1267,15 +1274,6 @@ const ResultsManager = {
         };
       }
     };
-    
-    // Gerenciador de e-mail
-    const EmailManager = {
-      async sendResultEmail() {
-        if (emailEnviado || !this.isValidResult()) {
-          Utils.debug("E-mail não enviado - já enviado ou resultado inválido");
-          return;
-        }
-
 
     // Gerenciador de quiz
     const QuizManager = {
