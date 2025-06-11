@@ -865,42 +865,31 @@
         }
       },
 
-      parsePercentuais(resultadoStr) {
-        const percentuais = { "Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0 };
-        
-        if (!resultadoStr) return percentuais;
-        
-        try {
-          const cleanStr = String(resultadoStr).replace(/\[object Object\]/g, '');
-          Utils.debug("Extraindo percentuais de", cleanStr);
+    parsePercentuais(resultadoStr) {
+      const percentuais = { "Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0 };
 
-          // Regex para encontrar padrões como "Tubarão (60%)" ou "Tubarão 60%"
-          const percentualRegex = /([^,(]+)\s*[\(]?(\d+)%[\)]?/g;
-          let match;
+      if (!resultadoStr) return percentuais;
 
-          while ((match = percentualRegex.exec(cleanStr)) !== null) {
-            const perfil = match[1].trim();
-            const percentual = parseInt(match[2], 10);
-            
-            Utils.debug(`Percentual encontrado: ${perfil} = ${percentual}%`);
-            
-            // Mapear para os nomes corretos dos perfis
-            if (perfil.toLowerCase().includes('tubarão') || perfil.toLowerCase().includes('tubarao')) {
-              percentuais["Tubarão"] = percentual;
-            } else if (perfil.toLowerCase().includes('águia') || perfil.toLowerCase().includes('aguia')) {
-              percentuais["Águia"] = percentual;
-            } else if (perfil.toLowerCase().includes('gato')) {
-              percentuais["Gato"] = percentual;
-            } else if (perfil.toLowerCase().includes('lobo')) {
-              percentuais["Lobo"] = percentual;
-            }
-          }
+      try {
+        const cleanStr = String(resultadoStr).replace(/\[object Object\]/g, '');
+        const regex = /([^\s,(]+)\s*\((\d+)%\)/g;
+        let match;
 
-          Utils.debug("Percentuais finais", percentuais);
-          return percentuais;
-        } catch (error) {
-          Utils.debug("Erro ao extrair percentuais", error);
-          return percentuais;
+        while ((match = regex.exec(cleanStr)) !== null) {
+          const perfil = match[1].trim();
+          const valor = parseInt(match[2], 10);
+
+          if (/águia/i.test(perfil)) percentuais["Águia"] = valor;
+          else if (/gato/i.test(perfil)) percentuais["Gato"] = valor;
+          else if (/lobo/i.test(perfil)) percentuais["Lobo"] = valor;
+          else if (/tubar[ãa]o/i.test(perfil)) percentuais["Tubarão"] = valor;
+      }
+
+      Utils.debug("Percentuais extraídos:", percentuais);
+      return percentuais;
+      } catch (error) {
+      Utils.debug("Erro ao extrair percentuais:", error);
+      return percentuais;
         }
       }
     };
