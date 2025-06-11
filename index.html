@@ -826,39 +826,30 @@
       },
 
       parseResultadoOrdenado(resultadoStr) {
-      if (!resultadoStr) return [];
+  if (!resultadoStr) return [];
 
-      try {
-        if (Array.isArray(resultadoStr)) {
-          resultadoStr = resultadoStr.join(',');
-        }
+  try {
+    if (Array.isArray(resultadoStr)) {
+      resultadoStr = resultadoStr.join(',');
+    }
 
-          const cleanStr = String(resultadoStr)
-            .replace(/\[object Object\]/g, '')
-            .replace(/['"]/g, '')
-            .trim();
+    const cleanStr = String(resultadoStr)
+      .replace(/\[object Object\]/g, '')
+      .replace(/['"]/g, '')
+      .trim();
 
-          Utils.debug("String de resultado limpa", cleanStr);
+    Utils.debug("String de resultado limpa", cleanStr);
 
-          return cleanStr
-              .split(',')
-              .map(item => item.trim())
-              .filter(item => item.length > 0 && !item.includes('[object Object]'));
+    return cleanStr
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0 && !item.includes('[object Object]'));
 
-            } catch (error) {
-            Utils.debug("Erro ao processar resultado ordenado", error);
-            return [];
-            }
-            }
-          }
-
-          Utils.debug("Resultados ordenados extraídos", resultados);
-          return resultados;
-        } catch (error) {
-          Utils.debug("Erro ao processar resultado ordenado", error);
-          return [];
-        }
-      },
+  } catch (error) {
+    Utils.debug("Erro ao processar resultado ordenado", error);
+    return [];
+  }
+},
 
     parsePercentuais(resultadoStr) {
       const percentuais = { "Águia": 0, "Gato": 0, "Lobo": 0, "Tubarão": 0 };
