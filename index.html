@@ -163,6 +163,10 @@
     <label for="email">Digite seu e-mail:</label><br>
     <input type="email" id="email" placeholder="Seu e-mail aqui" autocomplete="email" required /><br>
     <div id="email-error" class="validation-error hidden">Por favor, insira um e-mail válido.</div>
+
+    <label for="empresa">Digite o nome da sua empresa:</label><br>
+    <input type="text" id="empresa" placeholder="Nome da empresa" autocomplete="organization" required /><br>
+    <div id="empresa-error" class="validation-error hidden">Por favor, insira o nome da empresa.</div>
     
     <button id="start-button">Começar</button>
   </div>
@@ -433,6 +437,7 @@
     let perguntas = [];
     let respostas = {};
     let userName = "";
+    let userEmpresa = "";
     let userEmail = "";
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
@@ -543,6 +548,15 @@
           isValid = false;
         } else {
           this.hideError('name-error');
+        }
+
+        // Adicione logo após a validação do nome
+        const empresa = document.getElementById("empresa").value.trim();
+        if (!empresa) {
+          this.showError('empresa-error', 'Por favor, insira o nome da empresa.');
+        isValid = false;
+        } else {
+        this.hideError('empresa-error');
         }
 
         // Validar e-mail
@@ -887,6 +901,7 @@
         
         const payload = {
           userName,
+          userEmpresa,
           userAnswers: respostas,
           lastUserMessage: perguntasEnviadas,
           userEmail
@@ -1267,6 +1282,7 @@ const ResultsManager = {
 
         userName = document.getElementById("name").value.trim();
         userEmail = document.getElementById("email").value.trim();
+        userEmpresa = document.getElementById("empresa").value.trim();
 
         AppState.reset();
         AppState.initializeQuestions();
