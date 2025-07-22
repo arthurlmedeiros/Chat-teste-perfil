@@ -1071,7 +1071,8 @@ const ResultsManager = {
 
   renderResults(data) {
     let { userName: nome, perfilPredominante, resultadoOrdenado } = data;
-    perfilPredominante = perfilPredominante.replace(/\\n|\\r|\n|\r/g, "").trim();
+    nome = limparValor(nome);
+    perfilPredominante = limparValor(perfilPredominante);
 
     document.getElementById("perfil-titulo").innerHTML =
       `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
@@ -1079,7 +1080,7 @@ const ResultsManager = {
     let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
 
     const perfisValidos = resultadoOrdenado
-      .map(perfil => perfil.replace(/\\n|\\r|\\t|\\|\"|\n|\r|\t|\"/g, "").trim())
+      .map(perfil => limparValor(perfil))
       .filter(perfil => ["Águia", "Tubarão", "Lobo", "Gato"].includes(perfil));
 
     perfisValidos.forEach((perfil, index) => {
