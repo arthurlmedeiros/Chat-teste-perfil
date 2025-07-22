@@ -951,7 +951,7 @@
     // Gerenciador de resultados
 function showDetailedProfile(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const chaveLimpa = perfil.replace(/\\n|\\r|\\t|\n|\r|\t|\"/g, '').trim();
+  const chaveLimpa = String(perfil).replace(/[^\wÀ-ú ]/gi, '').trim();
   const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
@@ -990,7 +990,7 @@ function showDetailedProfile(perfil) {
 
 function renderDetalhesDoPerfil(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const chaveLimpa = perfil.replace(/\\n|\\r|\\t|\n|\r|\t|\"/g, '').trim();
+  const chaveLimpa = String(perfil).replace(/[^\wÀ-ú ]/gi, '').trim();
   const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
