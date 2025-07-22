@@ -484,6 +484,11 @@
       }
     };
 
+
+    function limparValor(valor) {
+      if (typeof valor !== 'string') return valor;
+      return valor.replace(/\\n|\\r|\\t|\\|\"|\n|\r|\t|\"/g, "").trim();
+    }
     // Utilitários
     const Utils = {
       // Função para embaralhar arrays
@@ -965,9 +970,10 @@
     };
 
     // Gerenciador de resultados
+    
 function showDetailedProfile(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const chaveLimpa = String(perfil).replace(/[^\wÀ-ú ]/gi, '').trim();
+  const chaveLimpa = limparValor(perfil);
   const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
@@ -1006,7 +1012,7 @@ function showDetailedProfile(perfil) {
 
 function renderDetalhesDoPerfil(perfil) {
   const container = document.getElementById("perfil-detalhado");
-  const chaveLimpa = String(perfil).replace(/[^\wÀ-ú ]/gi, '').trim();
+  const chaveLimpa = limparValor(perfil);
   const info = perfilDetalhado[chaveLimpa];
 
   if (!info) {
@@ -1072,9 +1078,13 @@ const ResultsManager = {
 
     let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
 
-    resultadoOrdenado.forEach((perfil, index) => {
+    const perfisValidos = resultadoOrdenado
+      .map(perfil => perfil.replace(/\\n|\\r|\\t|\\|\"|\n|\r|\t|\"/g, "").trim())
+      .filter(perfil => ["Águia", "Tubarão", "Lobo", "Gato"].includes(perfil));
+
+    perfisValidos.forEach((perfil, index) => {
       const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
-      const posicao = posicoes[index] || `${index + 1}º`;
+      const posicao = posicoes[index];
       detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
     });
 
