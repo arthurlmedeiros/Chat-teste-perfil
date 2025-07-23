@@ -492,8 +492,12 @@
 
     function limparValor(valor) {
       if (typeof valor !== 'string') return valor;
-      return valor.replace(/\\n|\\r|\\t|\\|\"|\n|\r|\t|\"/g, "").trim();
-    }
+      return valor
+      .replace(/\\[nr\\]+/g, '')   // Remove \n, \r, \\n, \\r, \\
+      .replace(/\\+/g, '')         // Remove qualquer barra invertida sobrando
+      .replace(/["']/g, '')        // Remove aspas
+      .trim();
+}
     // Utilitários
     const Utils = {
       // Função para embaralhar arrays
