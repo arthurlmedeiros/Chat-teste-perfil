@@ -870,10 +870,17 @@
       resultadoStr = resultadoStr.join(',');
     }
 
-    const cleanStr = String(resultadoStr)
+    let cleanStr = String(resultadoStr)
       .replace(/\[object Object\]/g, '')
       .replace(/['"]/g, '')
+      .replace(/\\+/g, '')
       .trim();
+
+// Limita a string só até antes de "percentuais" ou "perfilPredominante"
+    const splitIndex = cleanStr.search(/percentuais|perfilPredominante/i);
+    if (splitIndex > 0) {
+      cleanStr = cleanStr.slice(0, splitIndex).trim();
+    }
 
     Utils.debug("String de resultado limpa", cleanStr);
 
@@ -1090,10 +1097,20 @@ const ResultsManager = {
   renderResults(data) {
     let { userName: nome, perfilPredominante, resultadoOrdenado } = data;
     nome = limparValor(nome);
-    perfilPredominante = limparValor(perfilPredominante);
+
+    // Limpa o perfil predominante
+    let perfilExibir = limparValor(perfilPredominante);
+
+    // Se ainda está vazio, undefined ou só com sujeira, pega o primeiro perfil do resultado
+    if (!perfilExibir || perfilExibir === 'undefined') {
+      if (resultadoOrdenado && resultadoOrdenado.length > 0) {
+      const matchPerfil = resultadoOrdenado[0].match(/(Águia|Tubarão|Lobo|Gato)/i);
+      perfilExibir = matchPerfil ? matchPerfil[1] : '';
+      }
+    }
 
     document.getElementById("perfil-titulo").innerHTML =
-      `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilPredominante}</span>`;
+      `${nome}, seu perfil predominante é <span class="perfil-predominante">${perfilExibir}</span>`;
 
     let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
 
