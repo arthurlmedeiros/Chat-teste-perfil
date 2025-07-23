@@ -168,6 +168,10 @@
     <label for="empresa">Digite o nome da sua empresa:</label><br>
     <input type="text" id="empresa" placeholder="Nome da empresa" autocomplete="organization" required /><br>
     <div id="empresa-error" class="validation-error hidden">Por favor, insira o nome da empresa.</div>
+
+    <label for="CNPJ">Digite o nº do CNPJ da sua empresa:</label><br>
+    <input type="text" id="empresa" placeholder="CNPJ" autocomplete="organization" required /><br>
+    <div id="empresa-error" class="validation-error hidden">Por favor, insira o CNPJ da empresa.</div>
     
     <button id="start-button">Começar</button>
   </div>
@@ -440,6 +444,7 @@
     let userName = "";
     let userEmpresa = "";
     let userEmail = "";
+    let userCNPJ = "";
     let perguntasEnviadas = [];
     let perguntaAtual = 0;
     let debugMode = false;
@@ -563,6 +568,14 @@
         isValid = false;
         } else {
         this.hideError('empresa-error');
+        }
+
+        const CNPJ = document.getElementById("CNPJ").value.trim();
+        if (!CNPJ) {
+          this.showError('CNPJ-error', 'Por favor, insira o CNPJ da empresa.');
+          isValid = false;
+        } else {
+          this.hideError('CNPJ-error');
         }
 
         // Validar e-mail
@@ -908,6 +921,7 @@
         const payload = {
           userName,
           userEmpresa,
+          userCNPJ,
           userAnswers: respostas,
           lastUserMessage: perguntasEnviadas,
           userEmail
@@ -1297,6 +1311,7 @@ const ResultsManager = {
         userName = document.getElementById("name").value.trim();
         userEmail = document.getElementById("email").value.trim();
         userEmpresa = document.getElementById("empresa").value.trim();
+        userCNPJ = document.getElementById("CNPJ").value.trim();
 
         AppState.reset();
         AppState.initializeQuestions();
