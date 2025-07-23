@@ -1094,8 +1094,8 @@ const ResultsManager = {
     let detalhesHTML = "<p>Aqui está a distribuição do seu perfil comportamental:</p>";
 
     const perfisValidos = resultadoOrdenado
-      .map(perfil => limparValor(perfil))
-      .filter(perfil => ["Águia", "Tubarão", "Lobo", "Gato"].some(animal => perfil.includes(animal));
+        .map(perfil => limparValor(perfil))
+        .filter(perfil => ["Águia", "Tubarão", "Lobo", "Gato"].some(animal => perfil.includes(animal)));
 
     perfisValidos.forEach((perfil, index) => {
       const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
