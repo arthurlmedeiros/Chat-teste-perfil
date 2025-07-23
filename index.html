@@ -1086,7 +1086,9 @@ const ResultsManager = {
     perfisValidos.forEach((perfil, index) => {
       const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
       const posicao = posicoes[index];
-      detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${perfil}</strong></p>`;
+      const nomePerfil = ["Águia", "Tubarão", "Lobo", "Gato"].find(animal => perfil.includes(animal)) || perfil;
+      const percentual = /\((\d+)%\)/.exec(perfil)?.[1];
+      detalhesHTML += `<p class="perfil-item">${posicao}: <strong>${nomePerfil}${percentual ? ` (${percentual}%)` : ""}</strong></p>`;
     });
 
     detalhesHTML += "<p>Obrigado por participar do teste!</p>";
