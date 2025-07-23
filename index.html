@@ -1081,7 +1081,7 @@ const ResultsManager = {
 
     const perfisValidos = resultadoOrdenado
       .map(perfil => limparValor(perfil))
-      .filter(perfil => ["Águia", "Tubarão", "Lobo", "Gato"].includes(perfil));
+      .filter(perfil => ["Águia", "Tubarão", "Lobo", "Gato"].some(animal => perfil.includes(animal));
 
     perfisValidos.forEach((perfil, index) => {
       const posicoes = ["Predominante", "Segundo", "Terceiro", "Último"];
